@@ -29,6 +29,47 @@ ${p.instrucciones ? `\nInstrucciones adicionales del docente: ${p.instrucciones}
 
 const DIVERSIDAD = `Adaptaciones para atender la diversidad: estudiantes con dificultades de aprendizaje (problemas simplificados, apoyos visuales como pasos codificados por colores, roles estructurados en equipo) y estudiantes con mayor avance (problemas desafiantes, roles de liderazgo, crear problemas contextualizados). Considera barreras de lenguaje, necesidades motoras o visuales y el contexto socioeconómico (recursos mínimos: papel, lápices, pizarrón; valorar aportes orales tanto como escritos).`;
 
+// Sesiones reales de "QUINCENA 2 14 - 25 SEP SEC 21.docx": el modelo copia esta estructura y extensión.
+const EJEMPLO_SESIONES = `[
+  {
+    "titulo": "Descubriendo múltiplos y divisores",
+    "inicio": "- Preguntar:\\n-- ¿Qué números aparecen cuando contamos de 5 en 5?\\n-- ¿Cómo sabemos si un número puede dividirse exactamente entre otro?\\n- Recuperar saberes previos mediante ejemplos cotidianos del comercio local.",
+    "desarrollo": "- Explicación guiada sobre múltiplos y divisores.\\n- Resolver ejercicios individuales.\\n- En equipos elaborar una tabla de múltiplos y divisores de distintos números.\\n- Registrar conclusiones en el portafolio.",
+    "cierre": "- Socializar respuestas.\\n- Elaborar una definición grupal de múltiplo y divisor.",
+    "evaluacion": "Cuaderno y observación."
+  },
+  {
+    "titulo": "Criterios de divisibilidad",
+    "inicio": "- Juego rápido de identificación:\\n-- ¿Es divisible entre 2?\\n-- ¿Entre 3?\\n-- ¿Entre 5?",
+    "desarrollo": "- Presentación de criterios de divisibilidad para 2, 3, 5, 6, 9 y 10.\\n- Trabajo en parejas clasificando números.\\n- Elaboración de una guía visual en el cuaderno.",
+    "cierre": "Concurso breve de respuestas rápidas.",
+    "evaluacion": "Cuaderno y lista de cotejo."
+  },
+  {
+    "titulo": "Calculamos el Máximo Común Divisor (MCD)",
+    "inicio": "- Problema contextual:\\n-- Una cooperativa turística tiene 24 chalecos salvavidas y 36 silbatos. ¿Cuál es el grupo más grande que puede formarse usando todo el material sin que sobre nada?",
+    "desarrollo": "- Explicación del concepto de MCD.\\n- Resolución mediante factores primos.\\n- Problemas en equipos.",
+    "cierre": "- Elaborar una conclusión:\\n-- ¿Cuándo conviene usar MCD?",
+    "evaluacion": "Cuaderno, observación y participación."
+  },
+  {
+    "titulo": "Integramos y resolvemos problemas",
+    "inicio": "- Recuperar conceptos principales mediante preguntas detonadoras.",
+    "desarrollo": "- Resolución de desafíos matemáticos que mezclen:\\n-- Divisibilidad.\\n-- Números primos.\\n-- MCD y MCM.\\n- Los estudiantes elaboran un problema propio contextualizado en Puerto Peñasco.",
+    "cierre": "- Presentación de problemas.\\n- Autoevaluación y reflexión final del aprendizaje.",
+    "evaluacion": "Lista de cotejo."
+  }
+]`;
+
+const SESIONES = `- Para cada sesión, sigue EXACTAMENTE la estructura, el estilo y la extensión de este ejemplo real (otro contenido, mismo formato):
+${EJEMPLO_SESIONES}
+  Reglas que muestra el ejemplo:
+  · Viñetas cortas (máximo 12 palabras) que inician con verbo en infinitivo ("Resolver", "Elaborar") o sustantivo de acción ("Explicación", "Resolución"); sin explicaciones largas.
+  · Las preguntas detonadoras y los problemas van como sub-viñetas ('-- ') bajo una viñeta que termina en ':' ("Preguntar:", "Problema contextual:"). Los problemas llevan datos numéricos concretos y contexto de Puerto Peñasco (turismo, pesca, comercio).
+  · Inicio: recupera saberes previos (1 a 3 viñetas). Desarrollo: explicación o modelado, práctica guiada, trabajo individual o en equipos y registro en el producto central (3 a 4 viñetas). Cierre: socializar, comparar o concluir (1 o 2 viñetas; si es una sola acción, va sin viñeta).
+  · Las sesiones avanzan en secuencia: cada una retoma lo anterior y la última integra todo.
+  · Evaluación: solo el instrumento, en pocas palabras.`;
+
 function promptClases(p: Entrada) {
   const n = p.sesiones_input.length;
   return `${CONTEXTO(p)} Diseña un plan detallado para ${n} sesiones de clase, cada una de aproximadamente 35-45 minutos, con secciones de Inicio, Desarrollo y Cierre, para reforzar el siguiente contenido y Procesos de Desarrollo de Aprendizaje (PDA):
@@ -41,10 +82,10 @@ Incluye:
 - Producto central a lograr: un resultado tangible y progresivo que los estudiantes construirán a lo largo de las sesiones, alineado con la evaluación formativa (cuaderno, lista de cotejo, observación).
 - Articulación con otras disciplinas, rasgo del perfil de egreso, escenarios y ejes articuladores.
 - ${DIVERSIDAD}
-- Para cada sesión: actividades variadas alineadas con las orientaciones didácticas del programa (lluvia de ideas, trabajo colaborativo, uso del cuaderno, retroalimentación), prácticas, atractivas y contextualizadas a Puerto Peñasco, con su evaluación formativa. Cuando una actividad tenga preguntas o ejemplos, ponlos como sub-viñetas ('-- ').
+${SESIONES}
 - Recursos/materiales de todas las sesiones.
 
-Redacta en español de México, claro y amigable para docentes. Sé conciso: la planeación completa debe caber en unas 4 páginas (cada sesión de 60 a 90 palabras en total; propósito, problemática, producto y adaptaciones de 40 a 80 palabras cada uno).`;
+Redacta en español de México, claro y amigable para docentes. Sé conciso: la planeación completa debe caber en unas 4 páginas (cada sesión de 30 a 80 palabras en total, como el ejemplo; propósito, problemática, producto y adaptaciones de 40 a 80 palabras cada uno).`;
 }
 
 function promptProyecto(p: Entrada) {
