@@ -67,12 +67,14 @@ export type Planeacion = {
 const FORMATO = "Texto con una idea por línea. '# ' = subtítulo en negritas, '- ' = viñeta, '-- ' = sub-viñeta.";
 const texto = (d: string) => z.string().describe(`${d} ${FORMATO}`);
 
+// Estructura de las sesiones de "QUINCENA 2 14 - 25 SEP SEC 21.docx" (ver EJEMPLO_SESIONES en ia.ts).
+const ACCIONES = "Viñetas '- ' que inician con verbo en infinitivo o sustantivo de acción, de máximo 12 palabras; una viñeta que termina en ':' introduce sub-viñetas '-- ' con preguntas o el problema; sin '# '.";
 const sesionSchema = z.object({
-  titulo: z.string().describe("Título breve de la sesión, sin el número."),
-  inicio: texto("Actividades de inicio, 2 a 4 viñetas de máximo 12 palabras y sub-viñetas solo para preguntas o ejemplos; sin '# '."),
-  desarrollo: texto("Actividades de desarrollo, 2 a 4 viñetas de máximo 12 palabras y sub-viñetas solo para preguntas o ejemplos; sin '# '."),
-  cierre: texto("Actividades de cierre, 2 a 4 viñetas de máximo 12 palabras y sub-viñetas solo para preguntas o ejemplos; sin '# '."),
-  evaluacion: z.string().describe("Instrumento de evaluación formativa, breve. Ej: 'Cuaderno y lista de cotejo.'"),
+  titulo: z.string().describe("Título breve de la sesión, sin el número, en gerundio o primera persona del plural. Ej: 'Descubriendo múltiplos y divisores', 'Calculamos el Mínimo Común Múltiplo (MCM)'."),
+  inicio: texto(`Actividades de inicio: 1 a 3 viñetas que recuperan saberes previos con preguntas detonadoras o un problema contextual con datos concretos. ${ACCIONES}`),
+  desarrollo: texto(`Actividades de desarrollo: 3 a 4 viñetas (explicación o modelado, ejercicios guiados, trabajo individual o en equipos, registro en el producto). ${ACCIONES}`),
+  cierre: texto(`Actividades de cierre: 1 o 2 viñetas (socializar, comparar, conclusión o reflexión). Si es una sola acción va como párrafo sin '- '. ${ACCIONES}`),
+  evaluacion: z.string().describe("Instrumento de evaluación formativa, breve. Ej: 'Cuaderno y observación.', 'Lista de cotejo.'"),
 });
 
 // Campos comunes a ambos formatos.
