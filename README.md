@@ -18,6 +18,10 @@ App web (pensada primero para celular) para generar planeaciones de Matemáticas
 4. Crea el primer administrador: `npm run crear-admin -- usuario "Nombre del docente"`.
 5. `npm run dev` y entra en http://localhost:3000.
 
+## Despliegue
+
+Vercel, conectado a este repositorio: cada push a `main` se publica en producción (https://planeacionesweb.vercel.app). Variables en Vercel: las dos de Supabase públicas, `GEMINI_API_KEY` y `SUPABASE_SECRET_KEY`.
+
 ## Scripts
 
 | Comando | Qué hace |
@@ -25,6 +29,7 @@ App web (pensada primero para celular) para generar planeaciones de Matemáticas
 | `npm run dev` | Servidor de desarrollo |
 | `npm test` | Pruebas unitarias (lectura de contenidos, llenado de Word, reglas de IA, usuarios) |
 | `npm run e2e` | Pruebas Playwright (necesita `E2E_USUARIO`/`E2E_PASSWORD` de un administrador en `.env.local`; usa Gemini real) |
+| `E2E_BASE_URL=https://… npm run e2e` | Las mismas pruebas contra un despliegue |
 | `npm run crear-admin` | Crea o promueve un administrador |
 
 `templates/` contiene los formatos `.docx` que se llenan; `video/` es un proyecto aparte de Remotion con el video tutorial.
