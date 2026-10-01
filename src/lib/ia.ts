@@ -1,6 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { z } from "zod";
-import { METODOLOGIAS, REACTIVOS, TIPOS_SESION, actividadesSchema, schemaDe, type Actividades, type Planeacion, type ResultadoClases, type ResultadoProyecto } from "./planeacion.ts";
+import { FIJOS, METODOLOGIAS, REACTIVOS, TIPOS_SESION, actividadesSchema, schemaDe, type Actividades, type Planeacion, type ResultadoClases, type ResultadoProyecto } from "./planeacion.ts";
 
 // Orden de modelos: el primero es el preferido; los demás se usan si falla (ver generarJSON).
 // Sin reintentos del SDK y con corte a los 90 s por modelo: peor caso 3 × 90 s, dentro de maxDuration = 300.
@@ -18,13 +18,21 @@ const CONTEXTO = (p: Entrada) =>
 
 const temas = (p: Entrada) => p.seleccion.map((s) => `• Contenido: ${s.contenido}\n• PDA: ${s.pda}`).join("\n");
 
+// La nota de una sesión aplica solo a esa sesión; las instrucciones generales, a todas.
+const nota = (s: Entrada["sesiones_input"][number]) => (s.nota ? ` — instrucción SOLO para esta sesión: ${s.nota}` : "");
+
+const generales = (p: Entrada) =>
+  `${p.sesiones_input.some((s) => s.nota) ? "Cada instrucción marcada \"SOLO para esta sesión\" aplica únicamente a esa sesión; no la apliques a las demás.\n" : ""}${
+    p.instrucciones ? `Instrucciones generales del docente (aplícalas a todas las sesiones siempre que sea posible): ${p.instrucciones}\n` : ""
+  }`;
+
 const indicaciones = (p: Entrada) => {
   const n = p.sesiones_input.length;
-  const lista = p.sesiones_input.map((s, i) => `Sesión ${i + 1}: ${TIPOS_SESION[s.tipo]}${s.nota ? ` — ${s.nota}` : ""}`).join("\n");
+  const lista = p.sesiones_input.map((s, i) => `Sesión ${i + 1}: ${TIPOS_SESION[s.tipo]}${nota(s)}`).join("\n");
   return `Indicaciones por sesión (respétalas en orden; exactamente ${n} sesiones):
 ${lista}
 En una sesión de "Cálculo mental" se practican operaciones básicas mentalmente con números enteros positivos y negativos. En una sesión de "Evaluación" se aplica un instrumento que valore el avance en el PDA.
-${p.instrucciones ? `\nInstrucciones adicionales del docente: ${p.instrucciones}\n` : ""}`;
+${generales(p)}`;
 };
 
 const DIVERSIDAD = `Adaptaciones para atender la diversidad: estudiantes con dificultades de aprendizaje (problemas simplificados, apoyos visuales como pasos codificados por colores, roles estructurados en equipo) y estudiantes con mayor avance (problemas desafiantes, roles de liderazgo, crear problemas contextualizados). Considera barreras de lenguaje, necesidades motoras o visuales y el contexto socioeconómico (recursos mínimos: papel, lápices, pizarrón; valorar aportes orales tanto como escritos).`;
@@ -80,7 +88,7 @@ Incluye:
 - Propósito: un enunciado claro del objetivo de aprendizaje, enfocado en consolidar las habilidades en el contenido y PDA, contextualizado a la realidad de los estudiantes (ej. pesca, turismo o comercio en Puerto Peñasco), promoviendo el pensamiento crítico y la inclusión.
 - Situación o problemática identificada: dificultades o carencias específicas de los estudiantes relacionadas con el contenido y PDA (ej. dificultad para transitar del pensamiento aritmético al algebraico, errores comunes observados en clase o en evaluaciones diagnósticas).
 - Producto central a lograr: un resultado tangible y progresivo que los estudiantes construirán a lo largo de las sesiones, alineado con la evaluación formativa (cuaderno, lista de cotejo, observación).
-- Articulación con otras disciplinas, rasgo del perfil de egreso, escenarios y ejes articuladores.
+- Escenarios y ejes articuladores.
 - ${DIVERSIDAD}
 ${SESIONES}
 - Recursos/materiales de todas las sesiones.
@@ -104,7 +112,7 @@ Incluye:
 - Propósito: objetivo de aprendizaje del proyecto, enfocado en consolidar el contenido y PDA, contextualizado a la realidad de los estudiantes (ej. pesca, turismo o comercio en Puerto Peñasco), promoviendo el pensamiento crítico, la inclusión y la integración interdisciplinaria alineada con la NEM.
 - Problema del contexto: la necesidad comunitaria o real que atiende el proyecto y las dificultades de los estudiantes relacionadas con el PDA (errores comunes o de evaluaciones diagnósticas).
 - Producto central a lograr: resultado tangible y progresivo (ej. informe, modelo físico o digital, presentación en feria escolar) que se construye a lo largo del proyecto, alineado con la evaluación formativa (cuaderno, lista de cotejo, observación, portafolio).
-- Articulación con otras disciplinas, rasgo del perfil de egreso, escenarios y ejes articuladores.
+- Escenarios y ejes articuladores.
 - ${DIVERSIDAD}
 - Para cada momento: actividades prácticas, atractivas y contextualizadas a Puerto Peñasco, alineadas con la NEM (aprendizaje basado en proyectos, trabajo colaborativo, uso del cuaderno, retroalimentación, integración comunitaria), que fomenten la investigación, la aplicación real y la presentación final, con su evaluación formativa.
 - Recursos/materiales de todo el proyecto.
@@ -115,14 +123,16 @@ Redacta en español de México, claro y amigable para docentes. Sé conciso: la 
 export async function generar(p: Entrada): Promise<ResultadoClases | ResultadoProyecto> {
   const schema = schemaDe(p);
   const prompt = p.tipo === "proyecto" ? promptProyecto(p) : promptClases(p);
-  return schema.parse(await generarJSON(MODELOS_PLANEACION, prompt, z.toJSONSchema(schema)));
+  const paraIA = (schema as z.ZodObject).omit({ articulacion: true, rasgoPerfil: true });
+  const res = (await generarJSON(MODELOS_PLANEACION, prompt, z.toJSONSchema(paraIA))) as object;
+  return schema.parse({ ...res, ...FIJOS });
 }
 
 function promptActividades(p: Planeacion, anterior: string[]) {
   const n = p.sesiones_input.length;
   const titulos = p.resultado && "sesiones" in p.resultado ? p.resultado.sesiones.map((s) => s.titulo) : [];
   const lista = p.sesiones_input
-    .map((s, i) => `Sesión ${i + 1}: ${TIPOS_SESION[s.tipo]} — ${REACTIVOS[s.tipo]} reactivos${titulos[i] ? ` — tema: ${titulos[i]}` : ""}${s.nota ? ` — ${s.nota}` : ""}`)
+    .map((s, i) => `Sesión ${i + 1}: ${TIPOS_SESION[s.tipo]} — ${REACTIVOS[s.tipo]} reactivos${titulos[i] ? ` — tema: ${titulos[i]}` : ""}${nota(s)}`)
     .join("\n");
 
   return `Analiza el grado, el número de sesiones, el contenido y el PDA. Con base en ese análisis, diseña una actividad por cada sesión de clase de matemáticas de ${GRADOS[p.grado]} grado de secundaria, considerando clases de 40 minutos, donde los estudiantes:
@@ -135,7 +145,7 @@ ${temas(p)}
 
 Sesiones (exactamente ${n}, en este orden):
 ${lista}
-
+${generales(p)}
 Para cada sesión de Clase o Evaluación: exactamente 8 reactivos; los 6 primeros son operaciones puras y directas (sin contexto) y los 2 últimos son problemas contextualizados sencillos, cercanos a la vida de adolescentes (compras, distancias, tiempos), con precios reales aproximados en México cuando aplique (ej. $20 por un refresco).
 Para cada sesión de Cálculo mental: exactamente 10 operaciones básicas (sumas, restas, multiplicaciones y divisiones) con enteros positivos y/o negativos, accesibles para práctica oral rápida${
     anterior.length

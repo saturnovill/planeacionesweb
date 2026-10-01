@@ -77,12 +77,24 @@ const sesionSchema = z.object({
   evaluacion: z.string().describe("Instrumento de evaluación formativa, breve. Ej: 'Cuaderno y observación.', 'Lista de cotejo.'"),
 });
 
+// Texto fijo copiado de la plantilla "QUINCENA 2 14 - 25 SEP SEC 21|27.docx"; no lo genera la IA.
+export const FIJOS = {
+  articulacion: `# Lenguajes
+- Búsqueda y análisis de información: comprendidas como habilidades relacionadas con la identificación de una variedad de tipos de fuentes; el acceso a estas; su examen, para luego aceparlas o rechazarlas; y el análisis e interpretación de la información que dichas fuentes proveen.
+# Ética, naturaleza y sociedad
+- Reflexión crítica y responsable: referida a un conjunto de habilidades asociadas a la capacidad de reflexionar sobre tecnología, considerando criterios de impacto social y ambiental, de calidad, de efectividad, de respeto y ética.
+# De lo humano y lo comunitario
+- Trabajar colaborativamente, lo que se refleja en el compromiso por la prosecución de los objetivos del equipo; en asumir responsabilidades en el grupo y establecer maneras de trabajo eficiente; en aceptar consejos y críticas, escuchando y respetando al otro para llegar a acuerdos; en tomar conciencia y superar las dificultades personales y del trabajo; en aprender de los errores; en solicitar y prestar ayuda a sus pares para el cumplimiento de las metas del trabajo.`,
+  rasgoPerfil:
+    "Desarrollan el pensamiento crítico que les permita valorar los conocimientos y saberes de las ciencias y humanidades, reconociendo la importancia que tienen la historia y la cultura para examinar críticamente sus propias ideas y el valor de los puntos de vista de las y los demás como elementos centrales para proponer transformaciones en su comunidad desde una perspectiva solidaria.",
+};
+
 // Campos comunes a ambos formatos.
 const comunes = {
   proposito: z.string().describe("Un párrafo que inicie con 'Que las y los estudiantes...'."),
   producto: texto("'# Nombre del producto', párrafo, viñetas con lo que elaborarán y párrafo de cómo se evalúa."),
-  articulacion: texto("Los otros tres campos formativos de la NEM ('# Lenguajes', '# Ética, naturaleza y sociedades', '# De lo humano y lo comunitario'), cada uno seguido de una viñeta '- Nombre de la habilidad: descripción de cómo se vincula'."),
-  rasgoPerfil: z.string().describe("Un rasgo del perfil de egreso de la NEM, redactado en un párrafo."),
+  articulacion: z.string(),
+  rasgoPerfil: z.string(),
   escenarios: z.string().describe("Ej: 'Aula y escuela'."),
   ejes: z.array(z.enum(EJES)).min(1).max(3).describe("Ejes articuladores que se trabajan."),
   recursos: z.string().describe("Materiales, uno por línea, sin viñetas."),

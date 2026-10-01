@@ -5,7 +5,9 @@
   "scripts": {
     "capturas": "node capturas.ts",
     "capturas:escritorio": "VISTA=escritorio node capturas.ts",
+    "capturas:docente": "node capturas-docente.ts",
     "studio": "remotion studio src/index.ts",
+    "render:docente": "remotion render src/index.ts TutorialDocente out/tutorial-docente.mp4",
     "render": "remotion render src/index.ts Tutorial out/tutorial.mp4 && remotion render src/index.ts TutorialEscritorio out/tutorial-escritorio.mp4"
   },
   "dependencies": {

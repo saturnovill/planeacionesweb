@@ -12,6 +12,7 @@ import {
 import { loadFont } from "@remotion/google-fonts/Inter";
 import capturasMovil from "../public/capturas.json";
 import capturasEscritorio from "../public/capturas-escritorio.json";
+import capturasDocente from "../public/capturas-docente.json";
 
 export const { fontFamily } = loadFont("normal", {
   weights: ["400", "600", "700", "800"],
@@ -25,9 +26,9 @@ export const GRIS = "#475569";
 type Caja = { x: number; y: number; w: number; h: number };
 type Meta = Record<
   string,
-  { alto: number; barra: boolean; marcas: Record<string, Caja> }
+  { alto: number; barra: boolean; ruta?: string; marcas: Record<string, Caja> }
 >;
-export type Captura = keyof typeof capturasMovil;
+export type Captura = string;
 
 // ── Vista: celular (teléfono) o escritorio (ventana de navegador) ───────────
 export const VISTAS = {
@@ -40,6 +41,8 @@ export const VISTAS = {
     panel: 760,
     titulo: 76,
     padding: 150,
+    abajo: 0,
+    puntero: false,
   },
   escritorio: {
     // 1024 px sigue siendo vista de escritorio y deja la columna de la app más grande en el video.
@@ -51,13 +54,28 @@ export const VISTAS = {
     panel: 560,
     titulo: 64,
     padding: 90,
+    abajo: 0,
+    puntero: false,
+  },
+  // Tutorial para docentes: ventana un poco menor para dejar abajo el espacio de los subtítulos, y puntero de mouse.
+  docente: {
+    ancho: 1024,
+    alto: 800,
+    escala: 1.1,
+    dir: "capturas-docente",
+    meta: capturasDocente as Meta,
+    panel: 560,
+    titulo: 60,
+    padding: 90,
+    abajo: 110,
+    puntero: true,
   },
 } as const;
 export type Vista = keyof typeof VISTAS;
 const VistaCtx = createContext<Vista>("movil");
 export const VistaProvider = VistaCtx.Provider;
 export const useVista = () => VISTAS[useContext(VistaCtx)];
-export const useEsEscritorio = () => useContext(VistaCtx) === "escritorio";
+export const useEsEscritorio = () => useContext(VistaCtx) !== "movil";
 
 export const caja = (v: (typeof VISTAS)[Vista], c: Captura, marca: string) =>
   v.meta[c].marcas[marca];
@@ -90,7 +108,7 @@ export function useEntrada(desde = 0, damping = 18) {
 export type Toque = { cuadro: number; marca: string };
 
 // Ruta que se muestra en la barra de direcciones del navegador.
-const RUTAS: Record<Captura, string> = {
+const RUTAS: Record<string, string> = {
   "01-login": "/login",
   "02-perfil": "/perfil",
   "03-nueva": "/nueva",
@@ -109,16 +127,25 @@ const RUTAS: Record<Captura, string> = {
  */
 export const Telefono: React.FC<{
   captura: Captura;
+  /** Cambios de captura en el tiempo: [[cuadro, captura], ...] (la primera es `captura`). */
+  secuencia?: [number, Captura][];
   scroll?: [number, number][];
   toques?: Toque[];
   resaltar?: { marca: string; desde: number; hasta: number }[];
+  /** Texto que se va tecleando dentro de un campo (solo sobre `captura`, si se indica). */
+  escribir?: { marca: string; texto: string; desde: number; captura?: Captura }[];
   estilo?: React.CSSProperties;
-}> = ({ captura, scroll = [[0, 0]], toques = [], resaltar = [], estilo }) => {
+}> = ({ captura: inicial, secuencia = [], scroll = [[0, 0]], toques = [], resaltar = [], escribir = [], estilo }) => {
   const frame = useCurrentFrame();
   const v = useVista();
   const escritorio = useEsEscritorio();
+  const capturaEn = (f: number) =>
+    secuencia.filter(([k]) => f >= k).at(-1)?.[1] ?? inicial;
+  const captura = capturaEn(frame);
   const info = v.meta[captura];
-  const y = Math.min(clave(frame, scroll), Math.max(0, info.alto - v.alto));
+  const yEn = (f: number) =>
+    Math.min(clave(f, scroll), Math.max(0, v.meta[capturaEn(f)].alto - v.alto));
+  const y = yEn(frame);
   const W = v.ancho * v.escala;
   const H = v.alto * v.escala;
 
@@ -147,7 +174,37 @@ export const Telefono: React.FC<{
           src={staticFile(`${v.dir}/${captura}.png`)}
           style={{ width: v.ancho, display: "block" }}
         />
-        {resaltar.map((r) => {
+        {escribir
+          .filter((e) => (e.captura ?? captura) === captura)
+          .map((e) => {
+            const c = caja(v, captura, e.marca);
+            const n = Math.floor(
+              interpolate(frame - e.desde, [0, e.texto.length * 2], [0, e.texto.length], {
+                extrapolateLeft: "clamp",
+                extrapolateRight: "clamp",
+              }),
+            );
+            const cursor = frame >= e.desde && Math.floor(frame / 15) % 2 === 0;
+            return (
+              <div
+                key={e.marca + e.desde}
+                style={{
+                  position: "absolute",
+                  left: c.x + 13,
+                  top: c.y,
+                  height: c.h,
+                  lineHeight: `${c.h}px`,
+                  fontSize: 14,
+                  color: TINTA,
+                  whiteSpace: "pre",
+                }}
+              >
+                {e.texto.slice(0, n)}
+                <span style={{ opacity: cursor ? 1 : 0 }}>|</span>
+              </div>
+            );
+          })}
+        {resaltar.filter((r) => info.marcas[r.marca]).map((r) => {
           const c = caja(v, captura, r.marca);
           const o = interpolate(
             frame,
@@ -193,7 +250,22 @@ export const Telefono: React.FC<{
           }}
         />
       )}
-      {toques.map((t) => (
+      {v.puntero && (
+        <Puntero
+          puntos={toques.map((t) => {
+            const c = caja(v, capturaEn(t.cuadro), t.marca);
+            const fijo = t.marca === "guardar" || t.marca === "descargar";
+            return {
+              cuadro: t.cuadro,
+              x: (c.x + c.w / 2) * v.escala,
+              y: (c.y + c.h / 2 - (fijo ? 0 : yEn(t.cuadro))) * v.escala,
+            };
+          })}
+          ancho={W}
+          alto={H}
+        />
+      )}
+      {!v.puntero && toques.map((t) => (
         <Dedo
           key={t.marca + t.cuadro}
           cuadro={t.cuadro}
@@ -249,7 +321,7 @@ export const Telefono: React.FC<{
               color: GRIS,
             }}
           >
-            localhost:3000{RUTAS[captura]}
+            localhost:3000{info.ruta ?? RUTAS[captura]}
           </div>
         </div>
         {contenido}
@@ -271,6 +343,78 @@ export const Telefono: React.FC<{
     >
       {contenido}
     </div>
+  );
+};
+
+/**
+ * Puntero de mouse (vista de escritorio): espera en el último clic, viaja al siguiente en
+ * los ~18 cuadros previos y al hacer clic se encoge y deja una onda.
+ */
+const Puntero: React.FC<{
+  puntos: { cuadro: number; x: number; y: number }[];
+  ancho: number;
+  alto: number;
+}> = ({ puntos, ancho, alto }) => {
+  const frame = useCurrentFrame();
+  if (!puntos.length) return null;
+  const ps = [{ cuadro: -999, x: ancho * 0.72, y: alto * 0.92 }, ...puntos];
+  const sig = ps.findIndex((p) => p.cuadro > frame);
+  const a = ps[sig === -1 ? ps.length - 1 : sig - 1];
+  const b = sig === -1 ? a : ps[sig];
+  const viaje = Math.min(18, b.cuadro - a.cuadro - 2);
+  const t = sig === -1 ? 1 : interpolate(frame, [b.cuadro - viaje, b.cuadro - 2], [0, 1], suave);
+  const x = a.x + (b.x - a.x) * t;
+  const y = a.y + (b.y - a.y) * t;
+  const ultimo = [...puntos].reverse().find((p) => p.cuadro <= frame);
+  const dt = ultimo ? frame - ultimo.cuadro : 99;
+  const presion = interpolate(dt, [0, 3, 8], [1, 0.82, 1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
+  const onda = interpolate(dt, [0, 20], [0, 1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
+  return (
+    <>
+      {ultimo && dt <= 20 && (
+        <div
+          style={{
+            position: "absolute",
+            left: ultimo.x - 30,
+            top: ultimo.y - 30,
+            width: 60,
+            height: 60,
+            borderRadius: 30,
+            border: `4px solid ${INDIGO}`,
+            background: "rgba(79,70,229,.15)",
+            transform: `scale(${0.4 + onda})`,
+            opacity: 1 - onda,
+          }}
+        />
+      )}
+      <svg
+        width={34}
+        height={34}
+        viewBox="0 0 24 24"
+        style={{
+          position: "absolute",
+          left: x - 6,
+          top: y - 3,
+          transform: `scale(${presion})`,
+          transformOrigin: "6px 3px",
+          filter: "drop-shadow(0 3px 4px rgba(15,23,42,.35))",
+        }}
+      >
+        <path
+          d="M5 3l14 8.5-6.2 1.3 3.7 6.9-2.6 1.4-3.7-6.9L5 18.6z"
+          fill="#0f172a"
+          stroke="white"
+          strokeWidth={1.4}
+          strokeLinejoin="round"
+        />
+      </svg>
+    </>
   );
 };
 
@@ -343,8 +487,10 @@ export const Panel: React.FC<{
   titulo: string;
   texto?: string;
   puntos?: string[];
+  /** Cuadro en que aparece cada punto (por defecto, uno tras otro). */
+  puntosDesde?: number[];
   desde?: number;
-}> = ({ paso, titulo, texto, puntos = [], desde = 0 }) => {
+}> = ({ paso, titulo, texto, puntos = [], puntosDesde, desde = 0 }) => {
   const frame = useCurrentFrame();
   const v = useVista();
   const aparece = (d: number) => ({
@@ -410,7 +556,7 @@ export const Panel: React.FC<{
             <div
               key={p}
               style={{
-                ...aparece(16 + i * 14),
+                ...aparece(puntosDesde ? puntosDesde[i] - desde : 16 + i * 14),
                 display: "flex",
                 gap: 18,
                 alignItems: "flex-start",
@@ -470,7 +616,7 @@ export const Escena: React.FC<{
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "space-between",
-          padding: `0 ${v.padding}px`,
+          padding: `0 ${v.padding}px ${v.abajo}px`,
         }}
       >
         {children}
