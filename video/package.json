@@ -1,0 +1,24 @@
+{
+  "name": "planeaciones-video",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "capturas": "node capturas.ts",
+    "capturas:escritorio": "VISTA=escritorio node capturas.ts",
+    "studio": "remotion studio src/index.ts",
+    "render": "remotion render src/index.ts Tutorial out/tutorial.mp4 && remotion render src/index.ts TutorialEscritorio out/tutorial-escritorio.mp4"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.531",
+    "@remotion/google-fonts": "4.0.531",
+    "@remotion/transitions": "4.0.531",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "remotion": "4.0.531"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.3",
+    "@types/react": "^19.3.0",
+    "typescript": "^7.0.2"
+  }
+}

@@ -1,0 +1,174 @@
+{
+  "01-login": {
+    "alto": 844,
+    "barra": false,
+    "marcas": {
+      "entrar": {
+        "x": 19,
+        "y": 268,
+        "w": 352,
+        "h": 44
+      }
+    }
+  },
+  "02-perfil": {
+    "alto": 2597,
+    "barra": false,
+    "marcas": {
+      "archivo": {
+        "x": 33,
+        "y": 344,
+        "w": 324,
+        "h": 46
+      },
+      "segundo": {
+        "x": 33,
+        "y": 606,
+        "w": 324,
+        "h": 24
+      },
+      "marca": {
+        "x": 95.671875,
+        "y": 737,
+        "w": 77.75,
+        "h": 16
+      }
+    }
+  },
+  "03-nueva": {
+    "alto": 3712,
+    "barra": false,
+    "marcas": {
+      "tipo": {
+        "x": 33,
+        "y": 154,
+        "w": 158,
+        "h": 42
+      },
+      "escuela": {
+        "x": 33,
+        "y": 232,
+        "w": 324,
+        "h": 45
+      },
+      "pda": {
+        "x": 33,
+        "y": 722,
+        "w": 324,
+        "h": 96
+      },
+      "sesiones": {
+        "x": 33,
+        "y": 2920,
+        "w": 324,
+        "h": 46
+      },
+      "calculo": {
+        "x": 105,
+        "y": 3184,
+        "w": 252,
+        "h": 41
+      },
+      "nota": {
+        "x": 33,
+        "y": 3130,
+        "w": 324,
+        "h": 42
+      },
+      "generar": {
+        "x": 16,
+        "y": 3644,
+        "w": 358,
+        "h": 44
+      }
+    }
+  },
+  "04-generando": {
+    "alto": 844,
+    "barra": false,
+    "marcas": {}
+  },
+  "05-editor": {
+    "alto": 5243,
+    "barra": true,
+    "marcas": {
+      "proposito": {
+        "x": 33,
+        "y": 620,
+        "w": 324,
+        "h": 238
+      },
+      "sesion": {
+        "x": 16,
+        "y": 2911,
+        "w": 358,
+        "h": 1020
+      },
+      "guardar": {
+        "x": 12,
+        "y": 786,
+        "w": 178,
+        "h": 46
+      },
+      "descargar": {
+        "x": 198,
+        "y": 786,
+        "w": 180,
+        "h": 46
+      }
+    }
+  },
+  "07-actividades": {
+    "alto": 1813,
+    "barra": true,
+    "marcas": {
+      "respuesta": {
+        "x": 65,
+        "y": 500,
+        "w": 292,
+        "h": 42
+      },
+      "descargar": {
+        "x": 198,
+        "y": 786,
+        "w": 180,
+        "h": 46
+      }
+    }
+  },
+  "09-proyecto": {
+    "alto": 3572,
+    "barra": false,
+    "marcas": {
+      "proyecto": {
+        "x": 199,
+        "y": 154,
+        "w": 158,
+        "h": 42
+      },
+      "metodologia": {
+        "x": 33,
+        "y": 232,
+        "w": 324,
+        "h": 45
+      }
+    }
+  },
+  "10-proyecto-editor": {
+    "alto": 4885,
+    "barra": true,
+    "marcas": {
+      "momentos": {
+        "x": 16,
+        "y": 2577,
+        "w": 358,
+        "h": 24
+      }
+    }
+  },
+  "12-inicio": {
+    "alto": 844,
+    "barra": false,
+    "marcas": {}
+  }
+}
