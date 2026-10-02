@@ -1,20 +1,21 @@
 import { GoogleGenAI } from "@google/genai";
 import { z } from "zod";
-import { FIJOS, METODOLOGIAS, REACTIVOS, TIPOS_SESION, actividadesSchema, schemaDe, type Actividades, type Planeacion, type ResultadoClases, type ResultadoProyecto } from "./planeacion.ts";
+import { FIJOS, cicloEscolar, METODOLOGIAS, REACTIVOS, TIPOS_SESION, actividadesSchema, schemaDe, type Actividades, type Planeacion, type ResultadoClases, type ResultadoProyecto } from "./planeacion.ts";
 
 // Orden de modelos: el primero es el preferido; los demás se usan si falla (ver generarJSON).
 // Sin reintentos del SDK y con corte a los 90 s por modelo: peor caso 3 × 90 s, dentro de maxDuration = 300.
-// Planeación: lite primero (3-5× más rápido, cuota más amplia; el docente edita el texto de todos modos).
-export const MODELOS_PLANEACION = ["gemini-flash-lite-latest", "gemini-flash-latest", "gemini-3.5-flash"];
-// Actividades: Flash primero, porque calcula las respuestas y un error ahí pasa desapercibido.
-export const MODELOS_ACTIVIDADES = ["gemini-flash-latest", "gemini-3.5-flash", "gemini-flash-lite-latest"];
+// 3.8 Flash fijo (no el alias -latest, que puede cambiar de modelo y de precio); lite queda de último respaldo.
+// Planeación: mejor secuencia y problemas que lite por ~$0.006 más por planeación (medido oct 2026).
+export const MODELOS_PLANEACION = ["gemini-3.8-flash", "gemini-3.5-flash", "gemini-flash-lite-latest"];
+// Actividades: Flash, porque calcula las respuestas y un error ahí pasa desapercibido.
+export const MODELOS_ACTIVIDADES = MODELOS_PLANEACION;
 
 const GRADOS = ["", "primer", "segundo", "tercer"];
 
 type Entrada = Omit<Planeacion, "id" | "resultado" | "actividades" | "created_at">;
 
 const CONTEXTO = (p: Entrada) =>
-  `Actúa como un experto en planificación educativa para un docente de matemáticas de secundaria en un contexto socioeconómico medio-bajo, como Puerto Peñasco, Sonora, siguiendo el programa analítico mexicano 2024-2025 para el campo formativo 'Saberes y Pensamiento Científico', disciplina de matemáticas, ${GRADOS[p.grado]} grado.`;
+  `Actúa como un experto en planificación educativa para un docente de matemáticas de secundaria en un contexto socioeconómico medio-bajo, como Puerto Peñasco, Sonora, siguiendo el programa analítico mexicano del ciclo ${cicloEscolar(p.periodo_inicio)} para el campo formativo 'Saberes y Pensamiento Científico', disciplina de matemáticas, ${GRADOS[p.grado]} grado.`;
 
 const temas = (p: Entrada) => p.seleccion.map((s) => `• Contenido: ${s.contenido}\n• PDA: ${s.pda}`).join("\n");
 
@@ -90,6 +91,7 @@ Incluye:
 - Producto central a lograr: un resultado tangible y progresivo que los estudiantes construirán a lo largo de las sesiones, alineado con la evaluación formativa (cuaderno, lista de cotejo, observación).
 - Escenarios y ejes articuladores.
 - ${DIVERSIDAD}
+- Actividades variadas alineadas con las orientaciones didácticas del programa (lluvia de ideas, trabajo colaborativo, uso del cuaderno, retroalimentación), prácticas, atractivas y contextualizadas al entorno socioeconómico y cultural de Puerto Peñasco.
 ${SESIONES}
 - Recursos/materiales de todas las sesiones.
 

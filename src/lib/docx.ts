@@ -1,7 +1,7 @@
 import PizZip from "pizzip";
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { EJES, ESCUELAS, METODOLOGIAS, TIPOS_SESION, type Actividades, type Planeacion, type ResultadoClases, type ResultadoProyecto } from "./planeacion.ts";
+import { EJES, ESCUELAS, cicloEscolar, METODOLOGIAS, TIPOS_SESION, type Actividades, type Planeacion, type ResultadoClases, type ResultadoProyecto } from "./planeacion.ts";
 
 /*
  * Llena el .docx original localizando cada fila por su etiqueta y reemplazando el contenido
@@ -30,12 +30,18 @@ const VINETAS = `<w:abstractNum w:abstractNumId="${NUM_ID}"><w:multiLevelType w:
 type Opc = { b?: boolean; nivel?: 0 | 1; centro?: boolean };
 function parrafo(texto: string, { b, nivel, centro }: Opc = {}) {
   const rPr = `<w:rPr>${b ? "<w:b/><w:bCs/>" : ""}<w:lang w:val="es-MX"/></w:rPr>`;
+  const rNeg = `<w:rPr><w:b/><w:bCs/><w:lang w:val="es-MX"/></w:rPr>`;
   const num = nivel === undefined ? "" : `<w:numPr><w:ilvl w:val="${nivel}"/><w:numId w:val="${NUM_ID}"/></w:numPr>`;
   const jc = centro ? '<w:jc w:val="center"/>' : "";
-  return `<w:p><w:pPr>${num}${jc}${rPr}</w:pPr><w:r>${rPr}<w:t xml:space="preserve">${esc(texto)}</w:t></w:r></w:p>`;
+  // "**x**" → run en negritas dentro del párrafo.
+  const runs = texto
+    .split(/\*\*(.+?)\*\*/)
+    .map((t, i) => (t ? `<w:r>${i % 2 ? rNeg : rPr}<w:t xml:space="preserve">${esc(t)}</w:t></w:r>` : ""))
+    .join("");
+  return `<w:p><w:pPr>${num}${jc}${rPr}</w:pPr>${runs || `<w:r>${rPr}<w:t xml:space="preserve"></w:t></w:r>`}</w:p>`;
 }
 
-/** Convierte el mini-formato (# negritas, - viñeta, -- sub-viñeta) en párrafos. */
+/** Convierte el mini-formato (# negritas, - viñeta, -- sub-viñeta, **negritas en línea**) en párrafos. */
 export function markup(texto: string, centro = false) {
   const ps = texto
     .split("\n")
@@ -182,8 +188,7 @@ function finalizar(zip: PizZip, p: Pick<Planeacion, "periodo_inicio">) {
     numbering.replace(/<w:num /, `${VINETAS}<w:num `).replace("</w:numbering>", `<w:num w:numId="${NUM_ID}"><w:abstractNumId w:val="${NUM_ID}"/></w:num></w:numbering>`),
   );
 
-  const [anio, mes] = p.periodo_inicio.split("-").map(Number);
-  const ciclo = mes >= 8 ? `${anio}-${anio + 1}` : `${anio - 1}-${anio}`;
+  const ciclo = cicloEscolar(p.periodo_inicio);
   for (const h of zip.file(/^word\/header\d*\.xml$/))
     zip.file(h.name, h.asText().replace(/CICLO ESCOLAR \d{4}-\d{4}/g, `CICLO ESCOLAR ${ciclo}`));
 

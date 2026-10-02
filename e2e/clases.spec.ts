@@ -72,8 +72,31 @@ test("edita, valida y guarda", async ({ page }) => {
   await expect(page.getByText("Guardado")).toBeVisible();
 
   await page.reload();
-  await expect(page.getByLabel("Propósito")).toHaveValue("Propósito editado por E2E");
+  await expect(page.getByLabel("Propósito")).toHaveText("Propósito editado por E2E");
   await expect(page.getByLabel("Grupos", { exact: true })).toHaveValue("G y H");
+});
+
+test("edita con texto rico (negritas y viñetas)", async ({ page }) => {
+  await page.goto(url);
+  const producto = page.getByLabel("Producto central por lograr");
+  await producto.click();
+  await page.keyboard.press("ControlOrMeta+A");
+  await page.keyboard.type("Portafolio con ");
+  await page.keyboard.press("ControlOrMeta+B");
+  await page.keyboard.type("evidencias");
+  await page.keyboard.press("ControlOrMeta+B");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("- Tablas"); // "- " al inicio crea la viñeta
+  await page.keyboard.press("Enter");
+  await page.keyboard.press("Tab");
+  await page.keyboard.type("Gráficas");
+  await page.getByRole("button", { name: "Guardar" }).click();
+  await expect(page.getByText("Guardado")).toBeVisible();
+
+  await page.reload();
+  await expect(producto.locator("strong")).toHaveText("evidencias");
+  await expect(producto.locator("ul > li > ul > li")).toHaveText("Gráficas");
+  await expect(producto).not.toContainText("**");
 });
 
 test("descarga el .docx con el formato SEC 21", async ({ page }) => {
@@ -87,6 +110,9 @@ test("descarga el .docx con el formato SEC 21", async ({ page }) => {
   expect(texto).not.toContain("Sesión 4");
   expect(texto).not.toMatch(/Nombre del docente\s{2,}/); // el marcador del pie se reemplazó
   expect((xml.match(/>x</g) ?? []).length).toBe(2);
+  expect(xml).toContain('<w:b/><w:bCs/><w:lang w:val="es-MX"/></w:rPr><w:t xml:space="preserve">evidencias</w:t>'); // negritas dentro de la línea
+  expect(texto).toContain("Gráficas");
+  expect(texto).not.toContain("**");
 
   const header = await textoDocx(page, `${url}/docx`, "word/header1.xml");
   expect(header.texto).toContain("CICLO ESCOLAR 2026-2027");
@@ -135,12 +161,12 @@ test("el PDA ya planeado aparece marcado en una nueva planeación", async ({ pag
 
 test("duplica la planeación sin las actividades", async ({ page }) => {
   await page.goto(url);
-  const proposito = await page.getByLabel("Propósito").inputValue();
+  const proposito = await page.getByLabel("Propósito").innerText();
   await page.getByRole("button", { name: "Duplicar planeación" }).click();
   await expect(page.getByText("Copia creada: ajusta el periodo y guarda.")).toBeVisible();
   const copia = new URL(page.url()).pathname;
   expect(copia).not.toBe(url);
-  await expect(page.getByLabel("Propósito")).toHaveValue(proposito);
+  await expect(page.getByLabel("Propósito")).toHaveText(proposito);
   await expect(page.getByRole("link", { name: /Actividades por sesión 8 reactivos/ })).toBeVisible();
   expect((await page.request.get(`${copia}/actividades/docx`)).status()).toBe(404);
   await eliminarPlaneacion(page, copia);
@@ -163,7 +189,7 @@ test("aparece en la lista y se puede regenerar", async ({ page }) => {
 
   await page.getByRole("button", { name: /Regenerar todo/ }).click();
   await expect(page.getByText("Generada de nuevo")).toBeVisible({ timeout: 200_000 });
-  await expect(page.getByLabel("Propósito")).not.toHaveValue("Propósito editado por E2E");
+  await expect(page.getByLabel("Propósito")).not.toHaveText("Propósito editado por E2E");
 });
 
 test("elimina la planeación", async ({ page }) => {
