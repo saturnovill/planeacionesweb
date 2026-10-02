@@ -1,7 +1,7 @@
 "use server";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/supabase/server";
-import { actividadesSchema, ultimoCalculoMental, type Planeacion } from "@/lib/planeacion";
+import { actividadesEditadasSchema, ultimoCalculoMental, type Planeacion } from "@/lib/planeacion";
 import { generarActividades, mensajeIA } from "@/lib/ia";
 
 const volver = (id: string, q: string) => redirect(`/p/${id}/actividades?${q}`);
@@ -39,14 +39,21 @@ export async function generar(id: string) {
 export async function guardar(id: string, fd: FormData) {
   const { sb, p } = await cargar(id);
   const s = (k: string) => String(fd.get(k) ?? "").trim();
-  const r = actividadesSchema(p.sesiones_input.map((x) => x.tipo)).safeParse({
-    sesiones: (p.actividades?.sesiones ?? []).map((a, i) => ({
-      titulo: s(`a${i}_titulo`),
-      indicacion: s(`a${i}_indicacion`),
-      reactivos: a.reactivos.map((_, k) => ({ enunciado: s(`a${i}_r${k}_e`), respuesta: s(`a${i}_r${k}_r`) })),
-    })),
+  const todos = (k: string) => fd.getAll(k).map((v) => String(v).trim());
+  const r = actividadesEditadasSchema(p.sesiones_input.length).safeParse({
+    sesiones: (p.actividades?.sesiones ?? []).map((_, i) => {
+      const respuestas = todos(`a${i}_r`);
+      return {
+        titulo: s(`a${i}_titulo`),
+        indicacion: s(`a${i}_indicacion`),
+        // Renglones en orden del formulario; los que quedaron vacíos se descartan.
+        reactivos: todos(`a${i}_e`)
+          .map((enunciado, k) => ({ enunciado, respuesta: respuestas[k] ?? "" }))
+          .filter((x) => x.enunciado || x.respuesta),
+      };
+    }),
   });
-  if (!r.success) volver(id, "error=" + encodeURIComponent("No se pudieron guardar las actividades."));
+  if (!r.success) volver(id, "error=" + encodeURIComponent("Cada sesión necesita al menos un reactivo."));
   const { error } = await sb.from("planeaciones").update({ actividades: r.data }).eq("id", id);
   volver(id, error ? "error=" + encodeURIComponent(error.message) : "msg=Guardado");
 }

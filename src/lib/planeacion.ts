@@ -148,25 +148,29 @@ const reactivoSchema = z.object({
   respuesta: z.string().describe("Respuesta correcta para el docente. Con fracciones: 'sin simplificar = simplificada', ej. '6/8 = 3/4'."),
 });
 
+const sesionesSchema = (n: number, reactivos: z.ZodArray<typeof reactivoSchema>) =>
+  z.object({
+    sesiones: z
+      .array(
+        z.object({
+          titulo: z.string().describe("Título claro y motivador de la actividad."),
+          indicacion: z.string().describe("Instrucción breve para el alumnado, ej. 'Resuelve en tu cuaderno sin simplificar.'"),
+          reactivos,
+        }),
+      )
+      .length(n),
+  });
+
 export const actividadesSchema = (tipos: SesionInput["tipo"][]) =>
-  z
-    .object({
-      sesiones: z
-        .array(
-          z.object({
-            titulo: z.string().describe("Título claro y motivador de la actividad."),
-            indicacion: z.string().describe("Instrucción breve para el alumnado, ej. 'Resuelve en tu cuaderno sin simplificar.'"),
-            reactivos: z.array(reactivoSchema).min(8).max(10),
-          }),
-        )
-        .length(tipos.length),
-    })
-    .superRefine((a, ctx) =>
+  sesionesSchema(tipos.length, z.array(reactivoSchema).min(8).max(10)).superRefine((a, ctx) =>
       a.sesiones.forEach((s, i) => {
         if (s.reactivos.length !== REACTIVOS[tipos[i]])
           ctx.addIssue({ code: "custom", path: ["sesiones", i, "reactivos"], message: `La sesión ${i + 1} debe tener ${REACTIVOS[tipos[i]]} reactivos.` });
       }),
     );
+
+// Al editar, el docente puede quitar o agregar reactivos: basta con uno por sesión.
+export const actividadesEditadasSchema = (n: number) => sesionesSchema(n, z.array(reactivoSchema).min(1));
 
 export type Actividades = z.infer<ReturnType<typeof actividadesSchema>>;
 

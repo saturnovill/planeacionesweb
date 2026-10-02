@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, CalendarDays, ChevronRight, Copy, Download, ListChecks, RefreshCw, Save, Sparkles } from "lucide-react";
 import { requireUser } from "@/lib/supabase/server";
 import { periodo } from "@/lib/docx";
-import { EJES, METODOLOGIAS, TIPOS_SESION, type Planeacion } from "@/lib/planeacion";
+import { EJES, ESCUELAS, METODOLOGIAS, TIPOS_SESION, type Planeacion } from "@/lib/planeacion";
 import { Avisos, Enviar } from "@/components/app";
 import { Eliminar } from "@/components/eliminar";
 import { Pagina, Plegable } from "@/components/pagina";
@@ -13,6 +13,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { TextoRico } from "@/components/editor";
 import { duplicar, eliminar, guardar, regenerar } from "./actions";
 
@@ -217,7 +218,14 @@ export default async function Editor({ params, searchParams }: PageProps<"/p/[id
               <CardDescription>Copia la planeación para otra quincena, vuelve a generarla o elimínala.</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-wrap gap-2">
-              <form action={duplicar.bind(null, id)}>
+              <form action={duplicar.bind(null, id)} className="flex gap-2">
+                <NativeSelect name="escuela" defaultValue={p.escuela} aria-label="Escuela de la copia" className="w-28">
+                  {Object.keys(ESCUELAS).map((k) => (
+                    <NativeSelectOption key={k} value={k}>
+                      SEC {k}
+                    </NativeSelectOption>
+                  ))}
+                </NativeSelect>
                 <Enviar variant="outline" size="default" pendiente="Duplicando…">
                   <Copy /> Duplicar planeación
                 </Enviar>

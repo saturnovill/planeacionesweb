@@ -135,15 +135,32 @@ test("genera, edita y descarga las actividades", async ({ page }) => {
 
   await page.getByLabel("Sesión 1, reactivo 1", { exact: true }).fill("Reactivo editado E2E: 12 ÷ 4");
   await page.getByLabel("Sesión 1, respuesta 1", { exact: true }).fill("3");
+  // Quitar un renglón y agregar otro a mano.
+  const filas = page.getByLabel(/^Sesión 1, reactivo \d+$/);
+  const n = await filas.count();
+  const segundo = await page.getByLabel("Sesión 1, reactivo 2", { exact: true }).inputValue();
+  await page.getByRole("button", { name: "Quitar reactivo 2 de la sesión 1" }).click();
+  await expect(filas).toHaveCount(n - 1);
+  await page.getByRole("button", { name: "Agregar reactivo" }).first().click();
+  await page.getByLabel(`Sesión 1, reactivo ${n}`, { exact: true }).fill("Agregado E2E: 7 + 5");
+  await page.getByLabel(`Sesión 1, respuesta ${n}`, { exact: true }).fill("12");
   await page.getByRole("button", { name: "Guardar" }).click();
   await expect(page.getByText("Guardado")).toBeVisible();
   await page.reload();
   await expect(page.getByLabel("Sesión 1, reactivo 1", { exact: true })).toHaveValue("Reactivo editado E2E: 12 ÷ 4");
+  await expect(filas).toHaveCount(n);
+  await expect(page.getByLabel(`Sesión 1, reactivo ${n}`, { exact: true })).toHaveValue("Agregado E2E: 7 + 5");
+  await expect(page.getByLabel("Sesión 1, reactivo 2", { exact: true })).not.toHaveValue(segundo);
 
-  const [descarga] = await Promise.all([page.waitForEvent("download"), page.getByRole("link", { name: "Descargar .docx" }).click()]);
+  const [descarga] = await Promise.all([page.waitForEvent("download"), page.getByRole("link", { name: "Descargar con respuestas" }).click()]);
   expect(descarga.suggestedFilename()).toBe("Actividades 5 – 16 de octubre de 2026 SEC 21 2°.docx");
   const { texto } = await textoDocx(page, `${url}/actividades/docx`);
-  for (const s of ["ACTIVIDADES", "Docente: Docente E2E", "Reactivo editado E2E: 12 ÷ 4", "(3)", "(Cálculo mental)", "Sesión 3."]) expect(texto).toContain(s);
+  for (const s of ["ACTIVIDADES", "Docente: Docente E2E", "Reactivo editado E2E: 12 ÷ 4", "(3)", "Agregado E2E: 7 + 5", "(Cálculo mental)", "Sesión 3."]) expect(texto).toContain(s);
+  const [sinResp] = await Promise.all([page.waitForEvent("download"), page.getByRole("link", { name: "Descargar sin respuestas" }).click()]);
+  expect(sinResp.suggestedFilename()).toBe("Actividades 5 – 16 de octubre de 2026 SEC 21 2° sin respuestas.docx");
+  const { texto: alumno } = await textoDocx(page, `${url}/actividades/docx?sin-respuestas`);
+  expect(alumno).toContain("Reactivo editado E2E: 12 ÷ 4");
+  expect(alumno).not.toContain("(3)");
 
   await page.setViewportSize({ width: 390, height: 844 });
   await sinDesborde(page, "actividades");
@@ -162,8 +179,11 @@ test("el PDA ya planeado aparece marcado en una nueva planeación", async ({ pag
 test("duplica la planeación sin las actividades", async ({ page }) => {
   await page.goto(url);
   const proposito = await page.getByLabel("Propósito").innerText();
+  await expect(page.getByLabel("Escuela de la copia")).toHaveValue("21");
+  await page.getByLabel("Escuela de la copia").selectOption("27");
   await page.getByRole("button", { name: "Duplicar planeación" }).click();
   await expect(page.getByText("Copia creada: ajusta el periodo y guarda.")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Planeación por clases · SEC 27" })).toBeVisible();
   const copia = new URL(page.url()).pathname;
   expect(copia).not.toBe(url);
   await expect(page.getByLabel("Propósito")).toHaveText(proposito);

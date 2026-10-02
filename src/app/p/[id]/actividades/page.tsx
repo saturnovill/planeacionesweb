@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { generar, guardar } from "./actions";
+import { Reactivos } from "./reactivos";
 
 export const maxDuration = 300;
 
@@ -24,7 +25,7 @@ export default async function Actividades({ params, searchParams }: PageProps<"/
   const titulos = p.resultado && "sesiones" in p.resultado ? p.resultado.sesiones.map((s) => s.titulo) : [];
 
   return (
-    <Pagina className="pb-28">
+    <Pagina className="pb-40 sm:pb-28">
       <Link href={`/p/${id}`} className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="size-4" /> Volver a la planeación
       </Link>
@@ -80,38 +81,21 @@ export default async function Actividades({ params, searchParams }: PageProps<"/
                     <FieldLabel htmlFor={`a${i}_indicacion`}>Indicación</FieldLabel>
                     <Input id={`a${i}_indicacion`} name={`a${i}_indicacion`} defaultValue={s.indicacion} className="h-10" />
                   </Field>
-                  <div>
-                    <div className="mb-2 grid grid-cols-[1.75rem_1fr] gap-2 text-xs font-medium text-muted-foreground sm:grid-cols-[1.75rem_1fr_9rem]">
-                      <span />
-                      <span>Reactivo</span>
-                      <span className="hidden sm:block">Respuesta</span>
-                    </div>
-                    <ol className="flex flex-col gap-2">
-                      {s.reactivos.map((r, k) => (
-                        <li key={k} className="grid grid-cols-[1.75rem_1fr] items-start gap-x-2 gap-y-1 sm:grid-cols-[1.75rem_1fr_9rem]">
-                          <span className="flex h-9 items-center justify-center rounded-md bg-muted text-xs font-medium text-muted-foreground">{k + 1}</span>
-                          <Input name={`a${i}_r${k}_e`} defaultValue={r.enunciado} aria-label={`Sesión ${i + 1}, reactivo ${k + 1}`} className="h-9" />
-                          <Input
-                            name={`a${i}_r${k}_r`}
-                            defaultValue={r.respuesta}
-                            aria-label={`Sesión ${i + 1}, respuesta ${k + 1}`}
-                            className="col-start-2 h-9 border-amber-200 bg-amber-50 font-semibold sm:col-start-3"
-                          />
-                        </li>
-                      ))}
-                    </ol>
-                  </div>
+                  <Reactivos sesion={i} inicial={s.reactivos} />
                 </div>
               </Plegable>
             ))}
 
             <div className="fixed inset-x-0 bottom-0 z-20 border-t bg-background/95 p-3 backdrop-blur">
-              <div className="mx-auto flex max-w-3xl gap-2">
-                <Enviar pendiente="Guardando…" className="h-10 flex-1 sm:flex-none sm:px-5">
+              <div className="mx-auto flex max-w-3xl flex-wrap gap-2">
+                <Enviar pendiente="Guardando…" className="h-10 basis-full sm:basis-auto sm:px-5">
                   <Save /> Guardar
                 </Enviar>
                 <a href={`/p/${id}/actividades/docx`} className={cn(buttonVariants({ variant: "outline", size: "lg" }), "h-10 flex-1 sm:flex-none sm:px-5")}>
-                  <Download /> Descargar .docx
+                  <Download /> Descargar con respuestas
+                </a>
+                <a href={`/p/${id}/actividades/docx?sin-respuestas`} className={cn(buttonVariants({ variant: "outline", size: "lg" }), "h-10 flex-1 sm:flex-none sm:px-5")}>
+                  <Download /> Descargar sin respuestas
                 </a>
               </div>
             </div>

@@ -1,7 +1,7 @@
 "use server";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/supabase/server";
-import { EJES, schemaDe, type Planeacion, type ResultadoProyecto } from "@/lib/planeacion";
+import { EJES, ESCUELAS, schemaDe, type Escuela, type Planeacion, type ResultadoProyecto } from "@/lib/planeacion";
 import { generar, mensajeIA } from "@/lib/ia";
 
 const volver = (id: string, q: string) => redirect(`/p/${id}?${q}`);
@@ -62,10 +62,12 @@ export async function regenerar(id: string) {
   volver(id, "msg=Generada de nuevo");
 }
 
-export async function duplicar(id: string) {
+export async function duplicar(id: string, fd: FormData) {
   const { sb, p } = await cargar(id);
-  // Las actividades no se copian: se generan de nuevo para el nuevo periodo.
-  const { tipo, escuela, grado, grupos, periodo_inicio, periodo_fin, metodologia, instrucciones, seleccion, sesiones_input, resultado } = p;
+  // Las actividades no se copian: se generan de nuevo para el nuevo periodo. La copia puede ir a otra escuela.
+  const otra = String(fd.get("escuela"));
+  const escuela = otra in ESCUELAS ? (otra as Escuela) : p.escuela;
+  const { tipo, grado, grupos, periodo_inicio, periodo_fin, metodologia, instrucciones, seleccion, sesiones_input, resultado } = p;
   const copia = { tipo, escuela, grado, grupos, periodo_inicio, periodo_fin, metodologia, instrucciones, seleccion, sesiones_input, resultado };
   const { data, error } = await sb.from("planeaciones").insert(copia).select("id").single();
   if (error) volver(id, "error=" + encodeURIComponent(error.message));
