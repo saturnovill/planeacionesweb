@@ -13,17 +13,16 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { TextoRico } from "@/components/editor";
 import { duplicar, eliminar, guardar, regenerar } from "./actions";
 
 export const maxDuration = 300;
 
 function Area({ name, label, valor }: { name: string; label: string; valor: string }) {
-  // Label con htmlFor (no envolviendo): si envuelve al textarea, su contenido entra en el nombre accesible.
   return (
     <Field>
-      <FieldLabel htmlFor={name}>{label}</FieldLabel>
-      <Textarea id={name} name={name} defaultValue={valor} className="min-h-20" />
+      <FieldLabel id={`${name}-label`}>{label}</FieldLabel>
+      <TextoRico name={name} labelId={`${name}-label`} valor={valor} />
     </Field>
   );
 }
@@ -122,10 +121,7 @@ export default async function Editor({ params, searchParams }: PageProps<"/p/[id
             <Card>
               <CardHeader>
                 <CardTitle>Planeación</CardTitle>
-                <CardDescription>
-                  Una idea por línea. <code className="rounded bg-muted px-1"># </code> negritas, <code className="rounded bg-muted px-1">- </code> viñeta,{" "}
-                  <code className="rounded bg-muted px-1">-- </code> sub-viñeta.
-                </CardDescription>
+                <CardDescription>Usa la barra de cada campo para negritas y viñetas; así aparecerán en el Word.</CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col gap-5">
                 {"momentos" in r && <Texto name="titulo" label="Título del proyecto" valor={r.titulo} />}

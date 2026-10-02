@@ -56,15 +56,22 @@ export type Planeacion = {
   created_at: string;
 };
 
+/** Ciclo escolar ("2026-2027") de una fecha "AAAA-MM-DD": empieza en agosto. */
+export function cicloEscolar(fecha: string) {
+  const [anio, mes] = fecha.split("-").map(Number);
+  return mes >= 8 ? `${anio}-${anio + 1}` : `${anio - 1}-${anio}`;
+}
+
 /*
  * Todos los campos de texto usan el mismo mini-formato, por línea:
  *   "# texto"  → párrafo en negritas
  *   "- texto"  → viñeta
  *   "-- texto" → sub-viñeta
  *   otro       → párrafo normal
- * Así cada campo se edita en un textarea y se convierte igual al .docx.
+ *   "**x**"    → negritas dentro de la línea
+ * Así cada campo se edita con texto rico (ver markup.ts) y se convierte igual al .docx.
  */
-const FORMATO = "Texto con una idea por línea. '# ' = subtítulo en negritas, '- ' = viñeta, '-- ' = sub-viñeta.";
+const FORMATO = "Texto con una idea por línea. '# ' = subtítulo en negritas, '- ' = viñeta, '-- ' = sub-viñeta, '**palabra**' = negritas dentro del texto.";
 const texto = (d: string) => z.string().describe(`${d} ${FORMATO}`);
 
 // Estructura de las sesiones de "QUINCENA 2 14 - 25 SEP SEC 21.docx" (ver EJEMPLO_SESIONES en ia.ts).

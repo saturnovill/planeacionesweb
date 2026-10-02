@@ -115,3 +115,9 @@ if (process.env.OUT) {
   writeFileSync(process.env.OUT.replace(".docx", "-proyecto.docx"), generarDocx(baseProyecto, "Docente Prueba"));
   writeFileSync(process.env.OUT.replace(".docx", "-actividades.docx"), docxActividades({ ...base, escuela: "27", sesiones_input: [{ tipo: "clase", nota: "" }, { tipo: "calculo_mental", nota: "" }], actividades }, "Docente Prueba"));
 }
+
+test("negritas dentro de la línea", () => {
+  const xml = texto(generarDocx({ ...base, resultado: { ...resultado, rasgoPerfil: "Pensamiento **crítico** y algo" } }, "D"));
+  assert.match(xml, /<w:r><w:rPr><w:b\/><w:bCs\/><w:lang w:val="es-MX"\/><\/w:rPr><w:t xml:space="preserve">crítico<\/w:t><\/w:r>/);
+  assert.ok(xml.includes(">Pensamiento </w:t>") && xml.includes("> y algo</w:t>") && !xml.includes("**"));
+});
