@@ -162,7 +162,11 @@ Cada sesión lleva un título claro; el enunciado no incluye la respuesta. Usa u
 export async function generarActividades(p: Planeacion, anterior: string[]): Promise<Actividades> {
   const tipos = p.sesiones_input.map((s) => s.tipo);
   const schema = actividadesSchema(tipos);
-  return schema.parse(await generarJSON(MODELOS_ACTIVIDADES, promptActividades(p, anterior), z.toJSONSchema(schema, { unrepresentable: "any" })));
+  const json = z.toJSONSchema(schema, { unrepresentable: "any" }) as unknown as { properties: { sesiones: { minItems?: number; maxItems?: number } } };
+  // Gemini responde 400 si sesiones lleva minItems ≥ 9 junto al minItems de reactivos; el número lo exigen el prompt y schema.parse.
+  delete json.properties.sesiones.minItems;
+  delete json.properties.sesiones.maxItems;
+  return schema.parse(await generarJSON(MODELOS_ACTIVIDADES, promptActividades(p, anterior), json));
 }
 
 /** ¿Probar con el siguiente modelo? Saturado/caído (5xx, 429), retirado (404), sin respuesta o JSON inválido (sin status). */
