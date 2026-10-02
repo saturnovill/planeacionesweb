@@ -195,8 +195,8 @@ function finalizar(zip: PizZip, p: Pick<Planeacion, "periodo_inicio">) {
   return zip.generate({ type: "nodebuffer", compression: "DEFLATE" });
 }
 
-/** Hoja de actividades: el encabezado de la escuela (con logos en SEC 27) y un cuerpo nuevo. */
-export function docxActividades(p: Planeacion & { actividades: Actividades }, docente: string): Buffer {
+/** Hoja de actividades: el encabezado de la escuela (con logos en SEC 27) y un cuerpo nuevo. Sin respuestas, para entregar al alumnado. */
+export function docxActividades(p: Planeacion & { actividades: Actividades }, docente: string, respuestas = true): Buffer {
   const zip = new PizZip(readFileSync(path.join(process.cwd(), "templates", `clases-${p.escuela}.docx`)));
   const xml = zip.file("word/document.xml")!.asText();
 
@@ -211,7 +211,7 @@ export function docxActividades(p: Planeacion & { actividades: Actividades }, do
       (s, i) =>
         `<w:p>${espacio}${run(`Sesión ${i + 1}. ${s.titulo}`, true)}${run(p.sesiones_input[i]?.tipo === "calculo_mental" ? ` (${TIPOS_SESION.calculo_mental})` : "")}</w:p>` +
         parrafo(s.indicacion) +
-        s.reactivos.map((r, k) => `<w:p>${run(`${k + 1}. ${r.enunciado}   `)}${run(`(${r.respuesta})`, true)}</w:p>`).join(""),
+        s.reactivos.map((r, k) => `<w:p>${run(`${k + 1}. ${r.enunciado}`)}${respuestas ? run(`   (${r.respuesta})`, true) : ""}</w:p>`).join(""),
     ),
   ].join("");
 

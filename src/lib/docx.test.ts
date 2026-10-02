@@ -106,6 +106,8 @@ test("genera la hoja de actividades con el encabezado de la escuela", () => {
       assert.ok(xml.includes(s), `${escuela}: falta ${s}`);
     assert.ok(!xml.includes("PLANEACIÓN DOCENTE") && !xml.includes("Descubriendo"), "sin el contenido de la plantilla");
     assert.equal(zip.file("word/header1.xml")!.asText().includes("r:embed"), escuela === "27");
+    const sin = new PizZip(docxActividades({ ...base, escuela, sesiones_input, actividades }, "D", false)).file("word/document.xml")!.asText();
+    assert.ok(sin.includes("10. 9 × 3 &lt;") && !sin.includes("(27)"), `${escuela}: sin respuestas`);
   }
 });
 
