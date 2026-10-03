@@ -36,7 +36,7 @@ export default async function Login({ searchParams }: PageProps<"/login">) {
             <form className="flex flex-col gap-4">
               <Field>
                 <FieldLabel htmlFor="usuario">Usuario</FieldLabel>
-                <Input id="usuario" name="usuario" required autoComplete="username" autoCapitalize="none" spellCheck={false} placeholder="ana.lopez" className="h-10" />
+                <Input id="usuario" name="usuario" required autoComplete="username" autoCapitalize="none" spellCheck={false} className="h-10" />
               </Field>
               <Field>
                 <FieldLabel htmlFor="password">Contraseña</FieldLabel>
