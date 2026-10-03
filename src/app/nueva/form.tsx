@@ -199,6 +199,11 @@ export function FormNueva({ contenidos, usados }: { contenidos: PDA[]; usados: R
             <FieldLabel htmlFor="instrucciones">Instrucciones generales (opcional)</FieldLabel>
             <Textarea id="instrucciones" name="instrucciones" rows={3} placeholder="Ej: incluir una actividad con material reciclado" />
           </Field>
+          <Field>
+            <FieldLabel htmlFor="observaciones">Observaciones (opcional)</FieldLabel>
+            <Textarea id="observaciones" name="observaciones" rows={3} placeholder="Ej: el grupo H necesita repasar las tablas; la sesión 3 coincide con el simulacro" />
+            <FieldDescription>La IA las redacta mejor y van en el apartado “Observaciones” del Word.</FieldDescription>
+          </Field>
         </CardContent>
       </Card>
 

@@ -49,6 +49,7 @@ export type Planeacion = {
   periodo_fin: string;
   metodologia: Metodologia | null;
   instrucciones: string;
+  observaciones: string;
   seleccion: Seleccion[];
   sesiones_input: SesionInput[];
   resultado: ResultadoClases | ResultadoProyecto | null;
@@ -106,6 +107,8 @@ const comunes = {
   ejes: z.array(z.enum(EJES)).min(1).max(3).describe("Ejes articuladores que se trabajan."),
   recursos: z.string().describe("Materiales, uno por línea, sin viñetas."),
   adaptaciones: texto("'# Estudiantes con dificultades de aprendizaje' con viñetas y '# Estudiantes con mayor avance' con viñetas."),
+  // Opcional: las planeaciones anteriores no lo tienen y la IA solo lo llena si el docente escribió observaciones.
+  observaciones: texto("Las observaciones del docente mejor redactadas: claras, profesionales y sin agregar información nueva.").optional(),
 };
 
 export const resultadoClasesSchema = (n: number) =>

@@ -2,11 +2,13 @@ import Link from "next/link";
 import { requireUser } from "@/lib/supabase/server";
 import { periodo } from "@/lib/docx";
 import type { Seleccion } from "@/lib/planeacion";
-import { ArrowRight, BookOpen, CalendarDays, ChevronRight, Circle, CircleCheck, FileText, FolderKanban, Plus, Sparkles } from "lucide-react";
+import { ArrowRight, BookOpen, CalendarDays, Circle, CircleCheck, FileText, FolderKanban, Plus, Sparkles } from "lucide-react";
 import { Encabezado, Pagina } from "@/components/pagina";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Eliminar } from "@/components/eliminar";
+import { eliminar } from "@/app/p/[id]/actions";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 
 export default async function Inicio() {
@@ -64,10 +66,10 @@ export default async function Inicio() {
             const proyecto = p.tipo === "proyecto";
             const Icono = proyecto ? FolderKanban : BookOpen;
             return (
-              <li key={p.id}>
+              <li key={p.id} className="relative">
                 <Link
                   href={`/p/${p.id}`}
-                  className="group flex items-start gap-4 rounded-xl bg-card p-4 ring-1 ring-foreground/10 transition hover:ring-primary/40 hover:shadow-md"
+                  className="flex items-start gap-4 rounded-xl bg-card p-4 pr-14 ring-1 ring-foreground/10 transition hover:ring-primary/40 hover:shadow-md"
                 >
                   <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground">
                     <Icono className="size-5" />
@@ -85,8 +87,15 @@ export default async function Inicio() {
                     </span>
                     <span className="line-clamp-1 text-sm text-muted-foreground">{(p.seleccion as Seleccion[]).map((s) => s.pda).join(" · ")}</span>
                   </span>
-                  <ChevronRight className="mt-2 size-4 shrink-0 text-muted-foreground transition group-hover:translate-x-0.5" />
                 </Link>
+                {/* Fuera del Link: un botón no puede ir dentro de un enlace. */}
+                <Eliminar
+                  accion={eliminar.bind(null, p.id)}
+                  size="icon"
+                  className="absolute top-4 right-4"
+                  etiqueta={`Eliminar planeación ${p.grado}° ${p.grupos} SEC ${p.escuela} ${periodo(p.periodo_inicio, p.periodo_fin)}`}
+                  descripcion={`${proyecto ? "Por proyecto" : "Por clases"} · ${p.grado}° ${p.grupos} · ${periodo(p.periodo_inicio, p.periodo_fin)}. Se borrará junto con sus actividades. Esta acción no se puede deshacer.`}
+                />
               </li>
             );
           })}

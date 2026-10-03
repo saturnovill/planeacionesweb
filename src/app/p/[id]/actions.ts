@@ -41,6 +41,7 @@ export async function guardar(id: string, fd: FormData) {
     })),
     recursos: s("recursos"),
     adaptaciones: s("adaptaciones"),
+    observaciones: s("observaciones"),
   });
   if (!r.success) volver(id, "error=" + encodeURIComponent("Revisa los campos: selecciona de 1 a 3 ejes articuladores."));
   const { error } = await sb
@@ -67,8 +68,8 @@ export async function duplicar(id: string, fd: FormData) {
   // Se copian también las actividades (con lo editado). La copia puede ir a otra escuela.
   const otra = String(fd.get("escuela"));
   const escuela = otra in ESCUELAS ? (otra as Escuela) : p.escuela;
-  const { tipo, grado, grupos, periodo_inicio, periodo_fin, metodologia, instrucciones, seleccion, sesiones_input, resultado, actividades } = p;
-  const copia = { tipo, escuela, grado, grupos, periodo_inicio, periodo_fin, metodologia, instrucciones, seleccion, sesiones_input, resultado, actividades };
+  const { tipo, grado, grupos, periodo_inicio, periodo_fin, metodologia, instrucciones, observaciones, seleccion, sesiones_input, resultado, actividades } = p;
+  const copia = { tipo, escuela, grado, grupos, periodo_inicio, periodo_fin, metodologia, instrucciones, observaciones, seleccion, sesiones_input, resultado, actividades };
   const { data, error } = await sb.from("planeaciones").insert(copia).select("id").single();
   if (error) volver(id, "error=" + encodeURIComponent(error.message));
   redirect(`/p/${data!.id}?msg=${encodeURIComponent("Copia creada: ajusta el periodo y guarda.")}`);

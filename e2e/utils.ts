@@ -21,9 +21,17 @@ export async function prepararPerfil(page: Page, nombre = "Docente E2E") {
 
 export async function eliminarPlaneacion(page: Page, url: string) {
   await page.goto(url);
-  await page.getByRole("button", { name: "Eliminar planeación" }).click();
+  await abrirEliminar(page);
   await page.getByRole("alertdialog").getByRole("button", { name: "Sí, eliminar" }).click();
   await expect(page).toHaveURL("/");
+}
+
+/** Abre el diálogo de eliminar; reintenta el clic si llegó antes de que el botón se hidratara. */
+export async function abrirEliminar(page: Page) {
+  await expect(async () => {
+    await page.getByRole("button", { name: "Eliminar planeación" }).click();
+    await expect(page.getByRole("alertdialog")).toBeVisible({ timeout: 1_000 });
+  }).toPass();
 }
 
 /** Falla si la página es más ancha que la pantalla (scroll horizontal). */

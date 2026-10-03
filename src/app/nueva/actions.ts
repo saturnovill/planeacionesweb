@@ -21,6 +21,7 @@ export async function crear(_: { error?: string }, fd: FormData): Promise<{ erro
     periodo_inicio: s("periodo_inicio"),
     periodo_fin: s("periodo_fin"),
     instrucciones: s("instrucciones"),
+    observaciones: s("observaciones"),
     seleccion: fd.getAll("pda").map((i) => contenidos[Number(i)]).filter(Boolean).map(({ contenido, pda }) => ({ contenido, pda })),
     sesiones_input: Array.from({ length: n }, (_, i): SesionInput => ({
       tipo: s(`tipo_${i}`) in TIPOS_SESION ? (s(`tipo_${i}`) as SesionInput["tipo"]) : "clase",

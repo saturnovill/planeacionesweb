@@ -13,24 +13,27 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-/** Botón "Eliminar" con diálogo de confirmación; `accion` es la Server Action ya ligada al id. */
+/** Botón "Eliminar" con diálogo de confirmación; `accion` es la Server Action ya ligada al id. Con size="icon*" la etiqueta queda solo como aria-label. */
 export function Eliminar({
   accion,
   etiqueta = "Eliminar planeación",
   titulo = "¿Eliminar esta planeación?",
   descripcion = "Se borrará junto con sus actividades. Esta acción no se puede deshacer.",
   size,
+  className,
 }: {
   accion: (fd: FormData) => Promise<void>;
   etiqueta?: string;
   titulo?: string;
   descripcion?: string;
   size?: React.ComponentProps<typeof Button>["size"];
+  className?: string;
 }) {
+  const icono = size?.startsWith("icon");
   return (
     <AlertDialog>
-      <AlertDialogTrigger render={<Button variant="destructive" size={size} />}>
-        <Trash2 /> {etiqueta}
+      <AlertDialogTrigger render={<Button variant="destructive" size={size} className={className} aria-label={icono ? etiqueta : undefined} />}>
+        <Trash2 /> {!icono && etiqueta}
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>

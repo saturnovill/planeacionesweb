@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { EJES } from "../src/lib/planeacion";
-import { eliminarPlaneacion, prepararPerfil, sinDesborde, textoDocx } from "./utils";
+import { abrirEliminar, eliminarPlaneacion, prepararPerfil, sinDesborde, textoDocx } from "./utils";
 
 test.describe.configure({ mode: "serial" });
 
@@ -41,6 +41,7 @@ test("genera una planeación por clases con Gemini", async ({ page }) => {
   await expect(page.getByLabel(/Tipo de la sesión/)).toHaveCount(3);
   await page.getByLabel("Tipo de la sesión 2").selectOption("calculo_mental");
   await page.getByLabel("Instrucción de la sesión 3").fill("Cierre con un juego de repaso");
+  await page.getByLabel("Observaciones (opcional)").fill("el grupo h va atrasado con las tablas de multiplicar");
   await page.getByRole("button", { name: "Generar planeación" }).click();
   await expect(page.getByRole("button", { name: /Generando/ })).toBeDisabled();
 
@@ -50,6 +51,7 @@ test("genera una planeación por clases con Gemini", async ({ page }) => {
   await expect(page.locator("details summary").filter({ hasText: /^Sesión \d\./ })).toHaveCount(3);
   await expect(page.locator("summary").filter({ hasText: "Cálculo mental" })).toHaveCount(1);
   await expect(page.getByLabel("Propósito")).not.toBeEmpty();
+  await expect(page.getByLabel("Observaciones", { exact: true })).toContainText(/tablas/i);
 });
 
 test("edita, valida y guarda", async ({ page }) => {
@@ -108,6 +110,7 @@ test("descarga el .docx con el formato SEC 21", async ({ page }) => {
   for (const s of ["No. 21", "Docente E2E", "5 – 16 de octubre de 2026", "2 G y H", "Propósito editado por E2E", "Sesión 3.", "Usa criterios de divisibilidad"])
     expect(texto).toContain(s);
   expect(texto).not.toContain("Sesión 4");
+  expect(texto).toMatch(/Observaciones:[\s\S]*tablas/i);
   expect(texto).not.toMatch(/Nombre del docente\s{2,}/); // el marcador del pie se reemplazó
   expect((xml.match(/>x</g) ?? []).length).toBe(2);
   expect(xml).toContain('<w:b/><w:bCs/><w:lang w:val="es-MX"/></w:rPr><w:t xml:space="preserve">evidencias</w:t>'); // negritas dentro de la línea
@@ -190,12 +193,22 @@ test("duplica la planeación con las actividades", async ({ page }) => {
   await expect(page.getByRole("link", { name: /Actividades por sesión generadas/ })).toBeVisible();
   const { texto } = await textoDocx(page, `${copia}/actividades/docx`);
   expect(texto).toContain("Agregado E2E: 7 + 5");
-  await eliminarPlaneacion(page, copia);
+
+  // Se elimina desde "Mis planeaciones".
+  await page.goto("/");
+  // Por CSS: con el diálogo abierto el resto de la página queda fuera del árbol de accesibilidad.
+  const tarjeta = (ruta: string) => page.locator("li").filter({ has: page.locator(`a[href="${ruta}"]`) });
+  await tarjeta(copia).getByRole("button", { name: "Eliminar planeación 2° G y H SEC 27 5 – 16 de octubre de 2026" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Sí, eliminar" }).click();
+  await expect(page.getByRole("alertdialog")).toBeHidden();
+  await expect(tarjeta(copia)).toHaveCount(0);
+  expect((await page.request.get(`${copia}/actividades/docx`)).status()).toBe(404);
+  await expect(tarjeta(url)).toBeVisible();
 });
 
 test("eliminar pide confirmación", async ({ page }) => {
   await page.goto(url);
-  await page.getByRole("button", { name: "Eliminar planeación" }).click();
+  await abrirEliminar(page);
   const dialogo = page.getByRole("alertdialog");
   await expect(dialogo.getByText("¿Eliminar esta planeación?")).toBeVisible();
   await dialogo.getByRole("button", { name: "Cancelar" }).click();
