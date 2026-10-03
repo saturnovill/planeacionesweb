@@ -1,10 +1,11 @@
 import { redirect } from "next/navigation";
 import { cambiarPassword, requireUser } from "@/lib/supabase/server";
-import { parseContenidos, type PDA } from "@/lib/contenidos";
-import { KeyRound, ListChecks, Save } from "lucide-react";
+import { agregarPDA, parseContenidos, quitarPDA, type PDA } from "@/lib/contenidos";
+import { KeyRound, ListChecks, Plus, Save, X } from "lucide-react";
 import { Avisos, Enviar } from "@/components/app";
 import { Encabezado, Pagina, Plegable } from "@/components/pagina";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -25,6 +26,22 @@ async function guardar(fd: FormData) {
   redirect(error ? `/perfil?error=${encodeURIComponent(error.message)}` : "/perfil?msg=Guardado");
 }
 
+/** Agrega o quita un PDA de los contenidos cargados y vuelve con ese grado abierto. */
+async function editarPDA(fd: FormData) {
+  "use server";
+  const { sb, userId } = await requireUser();
+  const s = (k: string) => String(fd.get(k) ?? "").trim();
+  const grado = Number(fd.get("grado"));
+  if (![1, 2, 3].includes(grado) || !s("contenido") || !s("pda")) redirect(`/perfil?grado=${grado}&error=${encodeURIComponent("Escribe el contenido y el PDA.")}`);
+  const pda = { grado: grado as PDA["grado"], contenido: s("contenido"), pda: s("pda") };
+
+  const { data } = await sb.from("profiles").select("contenidos").eq("id", userId).single();
+  const quitar = fd.get("accion") === "quitar";
+  const contenidos = (quitar ? quitarPDA : agregarPDA)(data?.contenidos ?? [], pda);
+  const { error } = await sb.from("profiles").update({ contenidos }).eq("id", userId);
+  redirect(`/perfil?grado=${grado}&` + (error ? `error=${encodeURIComponent(error.message)}` : `msg=${quitar ? "PDA quitado" : "PDA agregado"}`));
+}
+
 async function contrasena(fd: FormData) {
   "use server";
   const { usuario } = await requireUser();
@@ -33,7 +50,7 @@ async function contrasena(fd: FormData) {
 }
 
 export default async function Perfil({ searchParams }: PageProps<"/perfil">) {
-  const { error, msg } = await searchParams;
+  const { error, msg, grado } = await searchParams;
   const { sb, userId, usuario } = await requireUser();
   const { data } = await sb.from("profiles").select("nombre, contenidos").eq("id", userId).maybeSingle();
   const contenidos: PDA[] = data?.contenidos ?? [];
@@ -57,7 +74,7 @@ export default async function Perfil({ searchParams }: PageProps<"/perfil">) {
               <Input id="contenidos" name="contenidos" type="file" accept=".docx" required={!contenidos.length} className="h-10 py-1.5" />
               <FieldDescription>
                 {contenidos.length > 0
-                  ? "Déjalo vacío para conservar el actual. Súbelo de nuevo si cambias tus contenidos."
+                  ? "Déjalo vacío para conservar el actual. Si subes uno nuevo, reemplaza los PDA agregados o quitados a mano."
                   : "La tabla de Contenidos y PDA por grado. Se lee una sola vez."}
               </FieldDescription>
             </Field>
@@ -96,22 +113,46 @@ export default async function Perfil({ searchParams }: PageProps<"/perfil">) {
             <Badge variant="secondary">{contenidos.length} PDA</Badge>
           </div>
           {porGrado.map(({ g, pdas }) => (
-            <Plegable key={g} titulo={`${g}° grado · ${pdas.length} PDA`}>
+            <Plegable key={g} titulo={`${g}° grado · ${pdas.length} PDA`} abierto={Number(grado) === g}>
               <ul className="space-y-4 text-sm">
                 {pdas.map((p, i) => (
-                  <li key={i} className="space-y-1">
-                    <div className="text-xs font-medium text-muted-foreground">{p.contenido}</div>
-                    <div>
-                      {p.pda}
-                      {p.marcas.map((m) => (
-                        <Badge key={m} variant="outline" className="ml-2 border-amber-200 bg-amber-50 text-amber-800">
-                          {m}
-                        </Badge>
-                      ))}
+                  <li key={i} className="flex items-start gap-2">
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <div className="text-xs font-medium text-muted-foreground">{p.contenido}</div>
+                      <div>
+                        {p.pda}
+                        {p.marcas.map((m) => (
+                          <Badge key={m} variant="outline" className="ml-2 border-amber-200 bg-amber-50 text-amber-800">
+                            {m}
+                          </Badge>
+                        ))}
+                      </div>
                     </div>
+                    <form action={editarPDA}>
+                      <input type="hidden" name="accion" value="quitar" />
+                      <input type="hidden" name="grado" value={g} />
+                      <input type="hidden" name="contenido" value={p.contenido} />
+                      <input type="hidden" name="pda" value={p.pda} />
+                      <Button type="submit" variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-destructive" aria-label={`Quitar PDA: ${p.pda}`}>
+                        <X />
+                      </Button>
+                    </form>
                   </li>
                 ))}
               </ul>
+              <form action={editarPDA} className="mt-5 grid gap-2 border-t pt-4 sm:grid-cols-[1fr_1.5fr_auto]">
+                <input type="hidden" name="grado" value={g} />
+                <Input name="contenido" list={`contenidos-${g}`} required placeholder="Contenido" aria-label={`Contenido del nuevo PDA de ${g}°`} className="h-9" />
+                <datalist id={`contenidos-${g}`}>
+                  {[...new Set(pdas.map((p) => p.contenido))].map((c) => (
+                    <option key={c} value={c} />
+                  ))}
+                </datalist>
+                <Input name="pda" required placeholder="PDA" aria-label={`Nuevo PDA de ${g}°`} className="h-9" />
+                <Enviar variant="outline" size="default" pendiente="Agregando…" className="h-9">
+                  <Plus /> Agregar PDA
+                </Enviar>
+              </form>
             </Plegable>
           ))}
         </section>
