@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { cambiarPassword, requireUser } from "@/lib/supabase/server";
-import { agregarPDA, parseContenidos, quitarPDA, type PDA } from "@/lib/contenidos";
-import { KeyRound, ListChecks, Plus, Save, X } from "lucide-react";
+import { agregarPDA, marcarPDA, parseContenidos, quitarPDA, type PDA } from "@/lib/contenidos";
+import { CircleCheck, CircleDashed, KeyRound, ListChecks, Plus, Save, X } from "lucide-react";
 import { Avisos, Enviar } from "@/components/app";
 import { Encabezado, Pagina, Plegable } from "@/components/pagina";
 import { Badge } from "@/components/ui/badge";
@@ -26,7 +26,7 @@ async function guardar(fd: FormData) {
   redirect(error ? `/perfil?error=${encodeURIComponent(error.message)}` : "/perfil?msg=Guardado");
 }
 
-/** Agrega o quita un PDA de los contenidos cargados y vuelve con ese grado abierto. */
+/** Agrega, quita o marca como usado un PDA de los contenidos cargados y vuelve con ese grado abierto. */
 async function editarPDA(fd: FormData) {
   "use server";
   const { sb, userId } = await requireUser();
@@ -36,10 +36,15 @@ async function editarPDA(fd: FormData) {
   const pda = { grado: grado as PDA["grado"], contenido: s("contenido"), pda: s("pda") };
 
   const { data } = await sb.from("profiles").select("contenidos").eq("id", userId).single();
-  const quitar = fd.get("accion") === "quitar";
-  const contenidos = (quitar ? quitarPDA : agregarPDA)(data?.contenidos ?? [], pda);
+  const lista: PDA[] = data?.contenidos ?? [];
+  const accion = fd.get("accion");
+  const [contenidos, ok] =
+    accion === "quitar" ? [quitarPDA(lista, pda), "PDA quitado"]
+    : accion === "marcar" ? [marcarPDA(lista, pda, ["ya usado"]), "PDA marcado como usado"]
+    : accion === "desmarcar" ? [marcarPDA(lista, pda, []), "Marca de usado quitada"]
+    : [agregarPDA(lista, pda), "PDA agregado"];
   const { error } = await sb.from("profiles").update({ contenidos }).eq("id", userId);
-  redirect(`/perfil?grado=${grado}&` + (error ? `error=${encodeURIComponent(error.message)}` : `msg=${quitar ? "PDA quitado" : "PDA agregado"}`));
+  redirect(`/perfil?grado=${grado}&` + (error ? `error=${encodeURIComponent(error.message)}` : `msg=${ok}`));
 }
 
 async function contrasena(fd: FormData) {
@@ -128,12 +133,20 @@ export default async function Perfil({ searchParams }: PageProps<"/perfil">) {
                         ))}
                       </div>
                     </div>
-                    <form action={editarPDA}>
-                      <input type="hidden" name="accion" value="quitar" />
+                    <form action={editarPDA} className="flex">
                       <input type="hidden" name="grado" value={g} />
                       <input type="hidden" name="contenido" value={p.contenido} />
                       <input type="hidden" name="pda" value={p.pda} />
-                      <Button type="submit" variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-destructive" aria-label={`Quitar PDA: ${p.pda}`}>
+                      {p.marcas.length ? (
+                        <Button type="submit" name="accion" value="desmarcar" variant="ghost" size="icon-sm" className="text-amber-600 hover:text-muted-foreground" aria-label={`Quitar marca de usado: ${p.pda}`} title="Quitar marca de usado">
+                          <CircleCheck />
+                        </Button>
+                      ) : (
+                        <Button type="submit" name="accion" value="marcar" variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-amber-600" aria-label={`Marcar como usado: ${p.pda}`} title="Marcar como usado">
+                          <CircleDashed />
+                        </Button>
+                      )}
+                      <Button type="submit" name="accion" value="quitar" variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-destructive" aria-label={`Quitar PDA: ${p.pda}`}>
                         <X />
                       </Button>
                     </form>
@@ -142,13 +155,8 @@ export default async function Perfil({ searchParams }: PageProps<"/perfil">) {
               </ul>
               <form action={editarPDA} className="mt-5 grid gap-2 border-t pt-4 sm:grid-cols-[1fr_1.5fr_auto]">
                 <input type="hidden" name="grado" value={g} />
-                <Input name="contenido" list={`contenidos-${g}`} required placeholder="Contenido" aria-label={`Contenido del nuevo PDA de ${g}°`} className="h-9" />
-                <datalist id={`contenidos-${g}`}>
-                  {[...new Set(pdas.map((p) => p.contenido))].map((c) => (
-                    <option key={c} value={c} />
-                  ))}
-                </datalist>
-                <Input name="pda" required placeholder="PDA" aria-label={`Nuevo PDA de ${g}°`} className="h-9" />
+                <Input name="contenido" required autoComplete="off" placeholder="Contenido" aria-label={`Contenido del nuevo PDA de ${g}°`} className="h-9" />
+                <Input name="pda" required autoComplete="off" placeholder="PDA" aria-label={`Nuevo PDA de ${g}°`} className="h-9" />
                 <Enviar variant="outline" size="default" pendiente="Agregando…" className="h-9">
                   <Plus /> Agregar PDA
                 </Enviar>

@@ -142,7 +142,7 @@ export function FormNueva({ contenidos, usados }: { contenidos: PDA[]; usados: R
                     {p.pda}
                     {p.marcas.map((m) => (
                       <Badge key={m} variant="outline" className="ml-2 border-amber-200 bg-amber-50 text-amber-800">
-                        usado: {m}
+                        {m === "ya usado" ? m : `usado: ${m}`}
                       </Badge>
                     ))}
                     {[...new Set(usados[p.pda])].map((u) => (

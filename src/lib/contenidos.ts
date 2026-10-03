@@ -57,3 +57,6 @@ export function agregarPDA(lista: PDA[], nuevo: Omit<PDA, "marcas">): PDA[] {
 
 /** Quita un PDA por su texto (no por índice, por si la lista cambió desde que se mostró). */
 export const quitarPDA = (lista: PDA[], x: Omit<PDA, "marcas">) => lista.filter((p) => !igual(p, x));
+
+/** Reemplaza las marcas de "ya usado" de un PDA ([] las quita). */
+export const marcarPDA = (lista: PDA[], x: Omit<PDA, "marcas">, marcas: string[]) => lista.map((p) => (igual(p, x) ? { ...p, marcas } : p));
