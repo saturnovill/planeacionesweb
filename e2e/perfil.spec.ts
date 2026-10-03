@@ -47,6 +47,11 @@ test("agrega y quita PDA a mano en Contenidos cargados", async ({ page }) => {
   await expect(page.getByLabel(/PDA manual E2E/)).toBeVisible();
 
   await page.goto("/perfil?grado=1");
+  await primero.getByRole("button", { name: "Marcar como usado: PDA manual E2E: resuelve problemas de prueba." }).click();
+  await expect(page.getByText("PDA marcado como usado")).toBeVisible();
+  await primero.getByRole("button", { name: "Quitar marca de usado: PDA manual E2E: resuelve problemas de prueba." }).click();
+  await expect(page.getByText("Marca de usado quitada")).toBeVisible();
+
   await primero.getByRole("button", { name: "Quitar PDA: PDA manual E2E: resuelve problemas de prueba." }).click();
   await expect(page.getByText("PDA quitado")).toBeVisible();
   await expect(titulo).toHaveText(`1° grado · ${n} PDA`);

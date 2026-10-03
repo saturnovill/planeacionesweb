@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { agregarPDA, parseContenidos, quitarPDA, type PDA } from "./contenidos.ts";
+import { agregarPDA, marcarPDA, parseContenidos, quitarPDA, type PDA } from "./contenidos.ts";
 
 test("lee CONTENIDOS.docx de referencia", () => {
   const pdas = parseContenidos(readFileSync("fixtures/CONTENIDOS.docx"));
@@ -35,4 +35,6 @@ test("agrega y quita PDA a mano", () => {
   assert.equal(agregarPDA(lista, { grado: 1, contenido: "A", pda: "a1" }), lista, "sin duplicados");
   assert.deepEqual(pdas(quitarPDA(lista, { grado: 1, contenido: "A", pda: "a1" })), ["b1", "a2"]);
   assert.equal(quitarPDA(lista, { grado: 2, contenido: "A", pda: "a1" }).length, 3, "solo el del mismo grado");
+  assert.deepEqual(marcarPDA(lista, { grado: 1, contenido: "B", pda: "b1" }, ["ya usado"])[1].marcas, ["ya usado"]);
+  assert.deepEqual(marcarPDA(lista, { grado: 1, contenido: "A", pda: "a1" }, [])[0].marcas, [], "quita la marca");
 });
