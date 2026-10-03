@@ -176,7 +176,7 @@ test("el PDA ya planeado aparece marcado en una nueva planeación", async ({ pag
   await expect(page.locator("label").filter({ hasText: /Usa criterios de divisibilidad/ }).getByText("planeado: 5 – 16 de octubre de 2026")).toBeVisible();
 });
 
-test("duplica la planeación sin las actividades", async ({ page }) => {
+test("duplica la planeación con las actividades", async ({ page }) => {
   await page.goto(url);
   const proposito = await page.getByLabel("Propósito").innerText();
   await expect(page.getByLabel("Escuela de la copia")).toHaveValue("21");
@@ -187,8 +187,9 @@ test("duplica la planeación sin las actividades", async ({ page }) => {
   const copia = new URL(page.url()).pathname;
   expect(copia).not.toBe(url);
   await expect(page.getByLabel("Propósito")).toHaveText(proposito);
-  await expect(page.getByRole("link", { name: /Actividades por sesión 8 reactivos/ })).toBeVisible();
-  expect((await page.request.get(`${copia}/actividades/docx`)).status()).toBe(404);
+  await expect(page.getByRole("link", { name: /Actividades por sesión generadas/ })).toBeVisible();
+  const { texto } = await textoDocx(page, `${copia}/actividades/docx`);
+  expect(texto).toContain("Agregado E2E: 7 + 5");
   await eliminarPlaneacion(page, copia);
 });
 

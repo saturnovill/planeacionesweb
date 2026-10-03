@@ -64,11 +64,11 @@ export async function regenerar(id: string) {
 
 export async function duplicar(id: string, fd: FormData) {
   const { sb, p } = await cargar(id);
-  // Las actividades no se copian: se generan de nuevo para el nuevo periodo. La copia puede ir a otra escuela.
+  // Se copian también las actividades (con lo editado). La copia puede ir a otra escuela.
   const otra = String(fd.get("escuela"));
   const escuela = otra in ESCUELAS ? (otra as Escuela) : p.escuela;
-  const { tipo, grado, grupos, periodo_inicio, periodo_fin, metodologia, instrucciones, seleccion, sesiones_input, resultado } = p;
-  const copia = { tipo, escuela, grado, grupos, periodo_inicio, periodo_fin, metodologia, instrucciones, seleccion, sesiones_input, resultado };
+  const { tipo, grado, grupos, periodo_inicio, periodo_fin, metodologia, instrucciones, seleccion, sesiones_input, resultado, actividades } = p;
+  const copia = { tipo, escuela, grado, grupos, periodo_inicio, periodo_fin, metodologia, instrucciones, seleccion, sesiones_input, resultado, actividades };
   const { data, error } = await sb.from("planeaciones").insert(copia).select("id").single();
   if (error) volver(id, "error=" + encodeURIComponent(error.message));
   redirect(`/p/${data!.id}?msg=${encodeURIComponent("Copia creada: ajusta el periodo y guarda.")}`);
