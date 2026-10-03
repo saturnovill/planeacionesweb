@@ -31,10 +31,42 @@ export function Eliminar({
 }) {
   const icono = size?.startsWith("icon");
   return (
+    <Confirmar
+      accion={accion}
+      boton={<Button variant="destructive" size={size} className={className} aria-label={icono ? etiqueta : undefined} />}
+      contenido={<><Trash2 /> {!icono && etiqueta}</>}
+      titulo={titulo}
+      descripcion={descripcion}
+      confirmar="Sí, eliminar"
+      pendiente="Eliminando…"
+      variant="destructive"
+    />
+  );
+}
+
+/** Botón que abre un diálogo y solo ejecuta `accion` (con confirmar=si) si el docente acepta. */
+export function Confirmar({
+  accion,
+  boton,
+  contenido,
+  titulo,
+  descripcion,
+  confirmar,
+  pendiente,
+  variant,
+}: {
+  accion: (fd: FormData) => Promise<void>;
+  boton: React.ReactElement;
+  contenido: React.ReactNode;
+  titulo: string;
+  descripcion: string;
+  confirmar: string;
+  pendiente: string;
+  variant?: React.ComponentProps<typeof Button>["variant"];
+}) {
+  return (
     <AlertDialog>
-      <AlertDialogTrigger render={<Button variant="destructive" size={size} className={className} aria-label={icono ? etiqueta : undefined} />}>
-        <Trash2 /> {!icono && etiqueta}
-      </AlertDialogTrigger>
+      <AlertDialogTrigger render={boton}>{contenido}</AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{titulo}</AlertDialogTitle>
@@ -44,8 +76,8 @@ export function Eliminar({
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
           <form action={accion}>
             <input type="hidden" name="confirmar" value="si" />
-            <Enviar variant="destructive" size="default" pendiente="Eliminando…" className="w-full">
-              Sí, eliminar
+            <Enviar variant={variant} size="default" pendiente={pendiente} className="w-full">
+              {confirmar}
             </Enviar>
           </form>
         </AlertDialogFooter>

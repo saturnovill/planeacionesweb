@@ -14,13 +14,14 @@ import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTi
 export default async function Inicio() {
   const { sb, userId } = await requireUser();
   const [{ data: perfil }, { data: planeaciones }] = await Promise.all([
-    sb.from("profiles").select("nombre, contenidos").eq("id", userId).maybeSingle(),
+    // Solo el primer PDA: basta para saber si ya subió su documento, sin traer la lista completa.
+    sb.from("profiles").select("nombre, primer_pda:contenidos->0").eq("id", userId).maybeSingle(),
     sb
       .from("planeaciones")
       .select("id, tipo, escuela, grado, grupos, periodo_inicio, periodo_fin, metodologia, seleccion, con_actividades:actividades->sesiones")
       .order("created_at", { ascending: false }),
   ]);
-  const listo = perfil?.nombre && perfil.contenidos?.length;
+  const listo = perfil?.nombre && perfil.primer_pda;
 
   return (
     <Pagina>
@@ -50,7 +51,7 @@ export default async function Inicio() {
                 {perfil?.nombre ? <CircleCheck className="size-4 text-emerald-600" /> : <Circle className="size-4 text-muted-foreground" />} Nombre del docente
               </li>
               <li className="flex items-center gap-2">
-                {perfil?.contenidos?.length ? <CircleCheck className="size-4 text-emerald-600" /> : <Circle className="size-4 text-muted-foreground" />} Documento de contenidos
+                {perfil?.primer_pda ? <CircleCheck className="size-4 text-emerald-600" /> : <Circle className="size-4 text-muted-foreground" />} Documento de contenidos
               </li>
             </ul>
             <Link href="/perfil" className={buttonVariants()}>

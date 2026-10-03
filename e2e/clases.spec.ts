@@ -221,7 +221,12 @@ test("aparece en la lista y se puede regenerar", async ({ page }) => {
   await page.getByRole("link", { name: /Por clases · 2° G y H.*SEC 21/ }).click();
   await expect(page).toHaveURL(url);
 
-  await page.getByRole("button", { name: /Regenerar todo/ }).click();
+  // Reintenta el clic si llegó antes de que el botón se hidratara (como abrirEliminar).
+  await expect(async () => {
+    await page.getByRole("button", { name: /Regenerar todo/ }).click();
+    await expect(page.getByRole("alertdialog")).toBeVisible({ timeout: 1_000 });
+  }).toPass();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Sí, regenerar" }).click();
   await expect(page.getByText("Generada de nuevo")).toBeVisible({ timeout: 200_000 });
   await expect(page.getByLabel("Propósito")).not.toHaveText("Propósito editado por E2E");
 });

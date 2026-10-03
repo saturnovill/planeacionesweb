@@ -32,4 +32,4 @@ Vercel, conectado a este repositorio: cada push a `main` se publica en producci√
 | `E2E_BASE_URL=https://‚Ä¶ npm run e2e` | Las mismas pruebas contra un despliegue |
 | `npm run crear-admin` | Crea o promueve un administrador |
 
-`templates/` contiene los formatos `.docx` que se llenan; `video/` es un proyecto aparte de Remotion con el video tutorial.
+`templates/` contiene los formatos `.docx` que se llenan.

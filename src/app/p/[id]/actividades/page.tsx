@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Download, RefreshCw, Save, Sparkles } from "lucide-react";
+import { ArrowLeft, RefreshCw, Save, Sparkles } from "lucide-react";
 import { requireUser } from "@/lib/supabase/server";
 import { REACTIVOS, TIPOS_SESION, type Planeacion } from "@/lib/planeacion";
-import { Avisos, Enviar } from "@/components/app";
+import { Avisos, Descargas, Enviar } from "@/components/app";
+import { Confirmar } from "@/components/eliminar";
 import { Pagina, Plegable } from "@/components/pagina";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -91,12 +91,13 @@ export default async function Actividades({ params, searchParams }: PageProps<"/
                 <Enviar pendiente="Guardando…" className="h-10 basis-full sm:basis-auto sm:px-5">
                   <Save /> Guardar
                 </Enviar>
-                <a href={`/p/${id}/actividades/docx`} className={cn(buttonVariants({ variant: "outline", size: "lg" }), "h-10 flex-1 sm:flex-none sm:px-5")}>
-                  <Download /> Descargar con respuestas
-                </a>
-                <a href={`/p/${id}/actividades/docx?sin-respuestas`} className={cn(buttonVariants({ variant: "outline", size: "lg" }), "h-10 flex-1 sm:flex-none sm:px-5")}>
-                  <Download /> Descargar sin respuestas
-                </a>
+                <Descargas
+                  enlaces={[
+                    { href: `/p/${id}/actividades/docx`, texto: "Descargar con respuestas" },
+                    { href: `/p/${id}/actividades/docx?sin-respuestas`, texto: "Descargar sin respuestas" },
+                  ]}
+                  className="h-10 flex-1 sm:flex-none sm:px-5"
+                />
               </div>
             </div>
           </form>
@@ -106,11 +107,15 @@ export default async function Actividades({ params, searchParams }: PageProps<"/
               <CardTitle>Más acciones</CardTitle>
             </CardHeader>
             <CardContent>
-              <form action={generar.bind(null, id)}>
-                <Enviar variant="outline" size="default" pendiente="Generando… (≈1 min)">
-                  <RefreshCw /> Regenerar actividades (se pierden los cambios)
-                </Enviar>
-              </form>
+              <Confirmar
+                accion={generar.bind(null, id)}
+                boton={<Button variant="outline" />}
+                contenido={<><RefreshCw /> Regenerar actividades</>}
+                titulo="¿Regenerar las actividades?"
+                descripcion="La IA escribirá reactivos nuevos y se perderán los cambios que hiciste a mano. Tarda alrededor de 1 minuto."
+                confirmar="Sí, regenerar"
+                pendiente="Generando… (≈1 min)"
+              />
             </CardContent>
           </Card>
         </>

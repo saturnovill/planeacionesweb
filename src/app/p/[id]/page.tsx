@@ -1,15 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, CalendarDays, ChevronRight, Copy, Download, ListChecks, RefreshCw, Save, Sparkles } from "lucide-react";
+import { ArrowLeft, CalendarDays, ChevronRight, Copy, ListChecks, RefreshCw, Save, Sparkles } from "lucide-react";
 import { requireUser } from "@/lib/supabase/server";
 import { periodo } from "@/lib/docx";
 import { EJES, ESCUELAS, METODOLOGIAS, TIPOS_SESION, type Planeacion } from "@/lib/planeacion";
-import { Avisos, Enviar } from "@/components/app";
-import { Eliminar } from "@/components/eliminar";
+import { Avisos, Descargas, Enviar } from "@/components/app";
+import { Confirmar, Eliminar } from "@/components/eliminar";
 import { Pagina, Plegable } from "@/components/pagina";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -206,9 +205,7 @@ export default async function Editor({ params, searchParams }: PageProps<"/p/[id
                 <Enviar pendiente="Guardando…" className="h-10 flex-1 sm:flex-none sm:px-5">
                   <Save /> Guardar
                 </Enviar>
-                <a href={`/p/${id}/docx`} className={cn(buttonVariants({ variant: "outline", size: "lg" }), "h-10 flex-1 sm:flex-none sm:px-5")}>
-                  <Download /> Descargar .docx
-                </a>
+                <Descargas enlaces={[{ href: `/p/${id}/docx`, texto: "Descargar .docx" }]} className="h-10 flex-1 sm:flex-none sm:px-5" />
               </div>
             </div>
           </form>
@@ -231,11 +228,15 @@ export default async function Editor({ params, searchParams }: PageProps<"/p/[id
                   <Copy /> Duplicar planeación
                 </Enviar>
               </form>
-              <form action={regenerar.bind(null, id)}>
-                <Enviar variant="outline" size="default" pendiente="Generando… (≈1 min)">
-                  <RefreshCw /> Regenerar todo con IA (se pierden los cambios)
-                </Enviar>
-              </form>
+              <Confirmar
+                accion={regenerar.bind(null, id)}
+                boton={<Button variant="outline" />}
+                contenido={<><RefreshCw /> Regenerar todo con IA</>}
+                titulo="¿Regenerar toda la planeación?"
+                descripcion="La IA escribirá una versión nueva y se perderán todos los cambios que hiciste a mano. Tarda alrededor de 1 minuto."
+                confirmar="Sí, regenerar"
+                pendiente="Generando… (≈1 min)"
+              />
               <Eliminar accion={eliminar.bind(null, id)} />
             </CardContent>
           </Card>
