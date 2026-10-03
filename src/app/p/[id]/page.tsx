@@ -197,6 +197,7 @@ export default async function Editor({ params, searchParams }: PageProps<"/p/[id
               <CardContent className="flex flex-col gap-5">
                 <Area name="recursos" label="Recursos / materiales" valor={r.recursos} />
                 <Area name="adaptaciones" label={"momentos" in r ? "Atención a la diversidad" : "Adaptaciones para atender la diversidad"} valor={r.adaptaciones} />
+                <Area name="observaciones" label="Observaciones" valor={r.observaciones ?? ""} />
               </CardContent>
             </Card>
 

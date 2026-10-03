@@ -16,6 +16,7 @@ create table public.planeaciones (
   periodo_fin date not null,
   metodologia text,
   instrucciones text not null default '',
+  observaciones text not null default '',     -- texto del docente; la IA lo redacta en resultado.observaciones
   seleccion jsonb not null default '[]',      -- [{contenido, pda}]
   sesiones_input jsonb not null default '[]', -- [{tipo, nota}]
   resultado jsonb,

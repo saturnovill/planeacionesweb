@@ -36,6 +36,10 @@ En una sesión de "Cálculo mental" se practican operaciones básicas mentalment
 ${generales(p)}`;
 };
 
+// Solo si el docente escribió observaciones; si no, el campo no se pide (ver generar).
+const observaciones = (p: Entrada) =>
+  p.observaciones ? `- Observaciones: redacta mejor, de forma clara y profesional, estas observaciones del docente, sin agregar información nueva: "${p.observaciones}"\n` : "";
+
 const DIVERSIDAD = `Adaptaciones para atender la diversidad: estudiantes con dificultades de aprendizaje (problemas simplificados, apoyos visuales como pasos codificados por colores, roles estructurados en equipo) y estudiantes con mayor avance (problemas desafiantes, roles de liderazgo, crear problemas contextualizados). Considera barreras de lenguaje, necesidades motoras o visuales y el contexto socioeconómico (recursos mínimos: papel, lápices, pizarrón; valorar aportes orales tanto como escritos).`;
 
 // Sesiones reales de "QUINCENA 2 14 - 25 SEP SEC 21.docx": el modelo copia esta estructura y extensión.
@@ -94,7 +98,7 @@ Incluye:
 - Actividades variadas alineadas con las orientaciones didácticas del programa (lluvia de ideas, trabajo colaborativo, uso del cuaderno, retroalimentación), prácticas, atractivas y contextualizadas al entorno socioeconómico y cultural de Puerto Peñasco.
 ${SESIONES}
 - Recursos/materiales de todas las sesiones.
-
+${observaciones(p)}
 Redacta en español de México, claro y amigable para docentes. Sé conciso: la planeación completa debe caber en unas 4 páginas (cada sesión de 30 a 80 palabras en total, como el ejemplo; propósito, problemática, producto y adaptaciones de 40 a 80 palabras cada uno).`;
 }
 
@@ -118,14 +122,14 @@ Incluye:
 - ${DIVERSIDAD}
 - Para cada momento: actividades prácticas, atractivas y contextualizadas a Puerto Peñasco, alineadas con la NEM (aprendizaje basado en proyectos, trabajo colaborativo, uso del cuaderno, retroalimentación, integración comunitaria), que fomenten la investigación, la aplicación real y la presentación final, con su evaluación formativa.
 - Recursos/materiales de todo el proyecto.
-
+${observaciones(p)}
 Redacta en español de México, claro y amigable para docentes. Sé conciso: la planeación completa debe caber en unas 5 páginas (propósito, problema, producto y adaptaciones de 40 a 80 palabras cada uno).`;
 }
 
 export async function generar(p: Entrada): Promise<ResultadoClases | ResultadoProyecto> {
   const schema = schemaDe(p);
   const prompt = p.tipo === "proyecto" ? promptProyecto(p) : promptClases(p);
-  const paraIA = (schema as z.ZodObject).omit({ articulacion: true, rasgoPerfil: true });
+  const paraIA = (schema as z.ZodObject).omit({ articulacion: true, rasgoPerfil: true, ...(p.observaciones ? {} : { observaciones: true }) });
   const res = (await generarJSON(MODELOS_PLANEACION, prompt, z.toJSONSchema(paraIA))) as object;
   return schema.parse({ ...res, ...FIJOS });
 }

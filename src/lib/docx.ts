@@ -105,6 +105,7 @@ export function generarDocx(p: Planeacion & { resultado: ResultadoClases | Resul
     "Recursos/materiales": markup(r.recursos),
     "Adaptaciones para atender": markup(r.adaptaciones),
     "Atención a la diversidad": markup(r.adaptaciones),
+    Observaciones: markup(r.observaciones ?? ""),
   };
   if ("sesiones" in r) valores["Situación o problemática"] = markup(r.problematica);
   if ("momentos" in r) {
