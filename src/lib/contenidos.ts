@@ -1,5 +1,3 @@
-import PizZip from "pizzip";
-
 export type PDA = { grado: 1 | 2 | 3; contenido: string; pda: string; marcas: string[] };
 
 // Anotaciones a mano en el documento: "13 – 25 SEP", "QUINCENA 1"
@@ -16,7 +14,9 @@ const parrafos = (celda: string) =>
     .filter(Boolean);
 
 /** Lee la primera tabla de CONTENIDOS.docx: col 0 = contenido, cols 1-3 = PDA de 1°, 2° y 3°. */
-export function parseContenidos(buf: ArrayBuffer | Buffer): PDA[] {
+// pizzip se importa al usarse para no cargarlo en el navegador (el perfil usa las funciones de abajo en el cliente).
+export async function parseContenidos(buf: ArrayBuffer | Buffer): Promise<PDA[]> {
+  const { default: PizZip } = await import("pizzip");
   const xml = new PizZip(buf).file("word/document.xml")?.asText();
   const tabla = xml?.match(/<w:tbl>[\s\S]*?<\/w:tbl>/)?.[0];
   if (!tabla) throw new Error("El documento no tiene una tabla de contenidos.");
@@ -60,3 +60,12 @@ export const quitarPDA = (lista: PDA[], x: Omit<PDA, "marcas">) => lista.filter(
 
 /** Reemplaza las marcas de "ya usado" de un PDA ([] las quita). */
 export const marcarPDA = (lista: PDA[], x: Omit<PDA, "marcas">, marcas: string[]) => lista.map((p) => (igual(p, x) ? { ...p, marcas } : p));
+
+export type Accion = "agregar" | "quitar" | "marcar" | "desmarcar";
+
+/** Aplica una edición a mano; la misma función corre en el navegador (al instante) y en el servidor (al guardar). */
+export const editarContenidos = (lista: PDA[], accion: Accion, x: Omit<PDA, "marcas">) =>
+  accion === "quitar" ? quitarPDA(lista, x)
+  : accion === "marcar" ? marcarPDA(lista, x, ["ya usado"])
+  : accion === "desmarcar" ? marcarPDA(lista, x, [])
+  : agregarPDA(lista, x);

@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { agregarPDA, marcarPDA, parseContenidos, quitarPDA, type PDA } from "./contenidos.ts";
 
-test("lee CONTENIDOS.docx de referencia", () => {
-  const pdas = parseContenidos(readFileSync("fixtures/CONTENIDOS.docx"));
+test("lee CONTENIDOS.docx de referencia", async () => {
+  const pdas = await parseContenidos(readFileSync("fixtures/CONTENIDOS.docx"));
   const g = (n: number) => pdas.filter((p) => p.grado === n);
 
   assert.ok(g(1).length > 30 && g(2).length > 15 && g(3).length > 15);
