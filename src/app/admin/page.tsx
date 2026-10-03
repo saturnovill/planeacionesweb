@@ -38,7 +38,7 @@ export default async function Admin({ searchParams }: PageProps<"/admin">) {
           <form action={crearDocente} className="grid gap-4 sm:grid-cols-2">
             <Field>
               <FieldLabel htmlFor="usuario">Usuario</FieldLabel>
-              <Input id="usuario" name="usuario" required autoCapitalize="none" spellCheck={false} autoComplete="off" placeholder="ana.lopez" className="h-10" />
+              <Input id="usuario" name="usuario" required autoCapitalize="none" spellCheck={false} autoComplete="off" className="h-10" />
               <FieldDescription>Minúsculas, números, punto o guion.</FieldDescription>
             </Field>
             <Field>
