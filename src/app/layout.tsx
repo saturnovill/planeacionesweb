@@ -7,6 +7,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { redirect } from "next/navigation";
 import { supabase } from "@/lib/supabase/server";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
 const geist = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -56,6 +57,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         )}
         {children}
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
