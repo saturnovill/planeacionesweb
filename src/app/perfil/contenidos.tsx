@@ -3,6 +3,7 @@ import { useRef, useState } from "react";
 import { CircleCheck, CircleDashed, ListChecks, Plus, X } from "lucide-react";
 import { editarContenidos, type Accion, type PDA } from "@/lib/contenidos";
 import { Avisos } from "@/components/app";
+import { Confirmar } from "@/components/eliminar";
 import { Plegable } from "@/components/pagina";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -64,9 +65,16 @@ export function ContenidosCargados({ inicial, guardar }: { inicial: PDA[]; guard
                         <CircleDashed />
                       </Button>
                     )}
-                    <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-destructive" aria-label={`Quitar PDA: ${p.pda}`} onClick={() => editar("quitar", p)}>
-                      <X />
-                    </Button>
+                    <Confirmar
+                      accion={async () => editar("quitar", p)}
+                      boton={<Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-destructive" aria-label={`Quitar PDA: ${p.pda}`} />}
+                      contenido={<X />}
+                      titulo="¿Seguro que desea eliminar este PDA?"
+                      descripcion={p.pda}
+                      confirmar="Sí, eliminar"
+                      pendiente="Eliminando…"
+                      variant="destructive"
+                    />
                   </div>
                 </li>
               ))}

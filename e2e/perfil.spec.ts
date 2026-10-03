@@ -66,6 +66,7 @@ test("agrega, marca y quita PDA a mano en Contenidos cargados, sin recargar", as
   await g;
   g = guardado();
   await primero.getByRole("button", { name: `Quitar PDA: ${texto}` }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Sí, eliminar" }).click();
   await expect(titulo).toHaveText(`1° grado · ${n} PDA`);
   await expect(primero.getByText("PDA manual E2E")).toHaveCount(0);
   await g;
