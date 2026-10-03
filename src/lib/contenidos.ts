@@ -44,3 +44,16 @@ export function parseContenidos(buf: ArrayBuffer | Buffer): PDA[] {
   if (!out.length) throw new Error("No se encontraron PDA en el documento.");
   return out;
 }
+
+const igual = (a: Omit<PDA, "marcas">, b: Omit<PDA, "marcas">) => a.grado === b.grado && a.contenido === b.contenido && a.pda === b.pda;
+
+/** Agrega un PDA a mano: tras el último de su mismo contenido y grado, o al final de su grado. */
+export function agregarPDA(lista: PDA[], nuevo: Omit<PDA, "marcas">): PDA[] {
+  if (lista.some((p) => igual(p, nuevo))) return lista;
+  const i = lista.findLastIndex((p) => p.grado === nuevo.grado && p.contenido === nuevo.contenido);
+  const j = i >= 0 ? i : lista.findLastIndex((p) => p.grado === nuevo.grado);
+  return lista.toSpliced(j >= 0 ? j + 1 : lista.length, 0, { ...nuevo, marcas: [] });
+}
+
+/** Quita un PDA por su texto (no por índice, por si la lista cambió desde que se mostró). */
+export const quitarPDA = (lista: PDA[], x: Omit<PDA, "marcas">) => lista.filter((p) => !igual(p, x));
