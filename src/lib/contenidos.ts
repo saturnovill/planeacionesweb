@@ -13,20 +13,26 @@ const parrafos = (celda: string) =>
     .map((p) => decode(all(p, /<w:t(?: [^>]*)?>([^<]*)<\/w:t>/g).join("")).replace(/\s+/g, " ").trim())
     .filter(Boolean);
 
-/** Lee la primera tabla de CONTENIDOS.docx: col 0 = contenido, cols 1-3 = PDA de 1°, 2° y 3°. */
+// Texto convertido de PDF: palabras cortadas al final de línea ("estra-tegias")
+const unirGuiones = (s: string) => s.replace(/([a-záéíóúñ])- ?([a-záéíóúñ])/g, "$1$2");
+
+/** Lee las tablas de contenidos: col 0 = contenido, cols 1-3 = PDA de 1°, 2° y 3°.
+ *  Acepta la tabla única de CONTENIDOS.docx o el Programa Sintético (una tabla por página). */
 // pizzip se importa al usarse para no cargarlo en el navegador (el perfil usa las funciones de abajo en el cliente).
 export async function parseContenidos(buf: ArrayBuffer | Buffer): Promise<PDA[]> {
   const { default: PizZip } = await import("pizzip");
   const xml = new PizZip(buf).file("word/document.xml")?.asText();
-  const tabla = xml?.match(/<w:tbl>[\s\S]*?<\/w:tbl>/)?.[0];
-  if (!tabla) throw new Error("El documento no tiene una tabla de contenidos.");
+  const tablas = xml?.match(/<w:tbl>[\s\S]*?<\/w:tbl>/g);
+  if (!tablas) throw new Error("El documento no tiene una tabla de contenidos.");
 
   const out: PDA[] = [];
-  for (const fila of all(tabla, /<w:tr[ >][\s\S]*?<\/w:tr>/g)) {
+  let contenido = "";
+  for (const fila of all(tablas.join(""), /<w:tr[ >][\s\S]*?<\/w:tr>/g)) {
     const celdas = all(fila, /<w:tc>[\s\S]*?<\/w:tc>/g).map(parrafos);
-    if (celdas.length < 4) continue;
+    if (celdas.length < 4 || celdas.slice(1).some((ps) => /grado$/i.test(ps.join(" ")))) continue;
     const marcasFila = celdas[0].filter((p) => MARCA.test(p));
-    const contenido = celdas[0].filter((p) => !MARCA.test(p)).join(" ");
+    // Contenido vacío: la fila sigue al de la página anterior
+    contenido = unirGuiones(celdas[0].filter((p) => !MARCA.test(p)).join(" ")) || contenido;
     if (!contenido || /^contenidos?$/i.test(contenido)) continue;
 
     celdas.slice(1, 4).forEach((ps, i) => {
@@ -34,10 +40,11 @@ export async function parseContenidos(buf: ArrayBuffer | Buffer): Promise<PDA[]>
       const inicio = out.length;
       for (const p of ps) {
         const prev = out.length > inicio ? out[out.length - 1] : null;
+        // Un PDA partido en dos párrafos (o dos páginas): la continuación empieza en minúscula
+        const ult = prev ?? out.findLast((q) => q.grado === grado && q.contenido === contenido);
         if (MARCA.test(p)) prev?.marcas.push(p);
-        // Un PDA partido en dos párrafos: la continuación empieza en minúscula
-        else if (prev && /^[a-záéíóúñ]/.test(p)) prev.pda += " " + p;
-        else out.push({ grado, contenido, pda: p, marcas: [...marcasFila] });
+        else if (ult && /^[a-záéíóúñ]/.test(p)) ult.pda = unirGuiones(ult.pda + " " + p);
+        else out.push({ grado, contenido, pda: unirGuiones(p), marcas: [...marcasFila] });
       }
     });
   }

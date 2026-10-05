@@ -22,6 +22,14 @@ test("lee CONTENIDOS.docx de referencia", async () => {
   assert.ok(pdas.filter((p) => p.contenido.startsWith("Suma y resta")).every((p) => p.marcas.includes("QUINCENA 1")));
 });
 
+test("lee el Programa Sintético (una tabla por página, texto de PDF)", async () => {
+  const pdas = await parseContenidos(readFileSync("fixtures/PROGRAMA_SINTETICO.docx"));
+  assert.ok(pdas.filter((p) => p.grado === 3).length > 15, "lee todas las tablas");
+  assert.ok(pdas.some((p) => p.pda.startsWith("Usa diversas estrategias al convertir números fraccionarios")), "une guiones");
+  assert.ok(pdas.every((p) => !/^[a-z]/.test(p.pda)), "une PDA partidos entre páginas");
+  assert.ok(pdas.some((p) => p.grado === 3 && p.contenido === "Azar y probabilidad"));
+});
+
 test("agrega y quita PDA a mano", () => {
   const lista: PDA[] = [
     { grado: 1, contenido: "A", pda: "a1", marcas: ["13 – 25 SEP"] },
